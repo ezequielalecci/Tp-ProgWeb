@@ -13,6 +13,9 @@ DETALLES DE ESTA SEGUNDA PARTE:
     - Por otro lado, se agregó la carpeta "internal" que contiene datos propios del funcionamiento interno del servidor (como los handlers de la API y el servidor de paginas HTML según la petición realizada) y los datos generados por "sqlc" para la peticiones 
 + Se modifico la direccion del archivo "main.go" que inicializa el servidor a la carpeta "server", además de que se mantuvo su estructura simple para que solo se encargue de iniciar la base de datos, el servidor y delegue el manejo de rutas a los Handlers
 
+esta seria la estructura de la base de datos
+![Diagrama base de datos](assets/DiagramaDB.jpeg)
+
 PARA FUTURAS EDICIONES:
 + Agregaremos el resto de entidades de la aplicación, junto con sus peticiones requeridas 
 + Si se nos solicita agregaremos .env y .gitignore para contraseñas y archivos que no sean necesarios
