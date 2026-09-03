@@ -30,7 +30,7 @@ func main() {
 
 	// rutas
 	http.HandleFunc("/api/equipos", apiHandler.GetEquipos)
-	http.HandleFunc("/", handlers.ServeViews) // Catch-all para vistas y 404
+	http.HandleFunc("/", handlers.ServeViews)
 
 	// inicio de servidor
 	port := ":8080"
