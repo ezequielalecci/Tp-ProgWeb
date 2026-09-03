@@ -1,4 +1,4 @@
-module tp2
+module tpweb
 
 go 1.26.5
 

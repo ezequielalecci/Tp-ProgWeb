@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Fútbol</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f4f4f9; }
+        h1, h2 { color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: #fff; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #007bff; color: white; }
+        button { cursor: pointer; padding: 5px 10px; margin-right: 5px; border: none; border-radius: 3px; }
+        .btn-update { background: #ffc107; color: #000; }
+        .btn-delete { background: #dc3545; color: #fff; }
+        .form-container { background: #fff; padding: 15px; border: 1px solid #ddd; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+    <h1>Panel de Administración</h1>
+
+    <!-- EQUIPOS -->
+    <h2>Equipos</h2>
+    <table id="tabla-equipos">
+        <thead>
+            <tr>
+                <th>ID</th><th>Nombre</th><th>Formación</th><th>Valoración</th><th>Posición</th><th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <!-- JUGADORES -->
+    <h2>Jugadores</h2>
+    <table id="tabla-jugadores">
+        <thead>
+            <tr>
+                <th>ID</th><th>Equipo ID</th><th>Nombre</th><th>Posición</th><th>Media</th><th>Goles</th><th>Asistencias</th><th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <!-- PARTIDOS -->
+    <h2>Partidos</h2>
+    <table id="tabla-partidos">
+        <thead>
+            <tr>
+                <th>ID</th><th>Local</th><th>Visitante</th><th>Goles L</th><th>Goles V</th><th>Estado</th><th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        const API_BASE = '/api';
+
+        async function cargarDatos() {
+            cargarEquipos();
+            cargarJugadores();
+            cargarPartidos();
+        }
+
+        // --- EQUIPOS ---
+        async function cargarEquipos() {
+            const res = await fetch(`${API_BASE}/equipos`);
+            const equipos = await res.json();
+            const tbody = document.querySelector('#tabla-equipos tbody');
+            tbody.innerHTML = '';
+            (equipos || []).forEach(eq => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${eq.id}</td>
+                        <td>${eq.nombre}</td>
+                        <td>${eq.formacion_actual}</td>
+                        <td>${eq.valoracion}</td>
+                        <td>${eq.posicion_tabla}</td>
+                        <td>
+                            <button class="btn-update" onclick="actualizarEquipo(${eq.id})">Editar</button>
+                            <button class="btn-delete" onclick="eliminarEquipo(${eq.id})">Eliminar</button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        async function actualizarEquipo(id) {
+            const nuevoNombre = prompt("Nuevo nombre del equipo:");
+            if (!nuevoNombre) return;
+            
+            await fetch(`${API_BASE}/equipos`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id, nombre: nuevoNombre })
+            });
+            cargarEquipos();
+        }
+
+        async function eliminarEquipo(id) {
+            if (!confirm("¿Eliminar equipo?")) return;
+            await fetch(`${API_BASE}/equipos?id=${id}`, { method: 'DELETE' });
+            cargarEquipos();
+        }
+
+        // --- JUGADORES ---
+        async function cargarJugadores() {
+            // Ejemplo buscando jugadores del equipo 1
+            const res = await fetch(`${API_BASE}/jugadores/equipo?equipo_id=1`);
+            const jugadores = await res.json();
+            const tbody = document.querySelector('#tabla-jugadores tbody');
+            tbody.innerHTML = '';
+            (jugadores || []).forEach(j => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${j.id}</td>
+                        <td>${j.equipo_id}</td>
+                        <td>${j.nombre}</td>
+                        <td>${j.posicion}</td>
+                        <td>${j.media_general}</td>
+                        <td>${j.goles}</td>
+                        <td>${j.asistencias}</td>
+                        <td>
+                            <button class="btn-update" onclick="sumarEstadisticas(${j.id})">+1 Gol/Asist</button>
+                            <button class="btn-delete" onclick="eliminarJugador(${j.id})">Eliminar</button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        async function sumarEstadisticas(id) {
+            await fetch(`${API_BASE}/jugadores/stats`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id, goles: 1, asistencias: 1 })
+            });
+            cargarJugadores();
+        }
+
+        async function eliminarJugador(id) {
+            if (!confirm("¿Eliminar jugador?")) return;
+            await fetch(`${API_BASE}/jugadores?id=${id}`, { method: 'DELETE' });
+            cargarJugadores();
+        }
+
+        // --- PARTIDOS ---
+        async function cargarPartidos() {
+            const res = await fetch(`${API_BASE}/partidos`);
+            const partidos = await res.json();
+            const tbody = document.querySelector('#tabla-partidos tbody');
+            tbody.innerHTML = '';
+            (partidos || []).forEach(p => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${p.id}</td>
+                        <td>${p.equipo_local_id}</td>
+                        <td>${p.equipo_visitante_id}</td>
+                        <td>${p.goles_local}</td>
+                        <td>${p.goles_visitante}</td>
+                        <td>${p.estado}</td>
+                        <td>
+                            <button class="btn-update" onclick="actualizarResultado(${p.id})">Resultado</button>
+                            <button class="btn-delete" onclick="eliminarPartido(${p.id})">Eliminar</button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        async function actualizarResultado(id) {
+            const gLocal = parseInt(prompt("Goles local:"));
+            const gVisita = parseInt(prompt("Goles visitante:"));
+            if (isNaN(gLocal) || isNaN(gVisita)) return;
+
+            await fetch(`${API_BASE}/partidos/resultado`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    id: id, 
+                    goles_local: gLocal, 
+                    goles_visitante: gVisita, 
+                    estado: 'FINALIZADO' 
+                })
+            });
+            cargarPartidos();
+        }
+
+        async function eliminarPartido(id) {
+            if (!confirm("¿Eliminar partido?")) return;
+            await fetch(`${API_BASE}/partidos?id=${id}`, { method: 'DELETE' });
+            cargarPartidos();
+        }
+
+        window.onload = cargarDatos;
+    </script>
+</body>
+</html>

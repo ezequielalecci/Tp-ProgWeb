@@ -6,6 +6,6 @@ sql:
     gen:
       go:
         package: "database"
-        out: "internal/database"
+        out: "db/sqlc"
         sql_package: "database/sql"
         emit_json_tags: true

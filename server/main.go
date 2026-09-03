@@ -6,10 +6,10 @@ import (
 	"log"
 	"net/http"
 
-	_ "github.com/lib/pq" // postgres
+	database "tpweb/db/sqlc"
+	"tpweb/server/routes"
 
-	"tp2/internal/database"
-	"tp2/internal/handlers"
+	_ "github.com/lib/pq" // postgres
 )
 
 func main() {
@@ -26,16 +26,15 @@ func main() {
 	}
 
 	queries := database.New(db)
-	apiHandler := handlers.NewAPIHandler(queries)
 
 	// rutas
-	http.HandleFunc("/api/equipos", apiHandler.GetEquipos)
-	http.HandleFunc("/", handlers.ServeViews)
+	router := routes.RegisterRoutes(queries)
 
 	// inicio de servidor
 	port := ":8080"
 	fmt.Printf("Servidor corriendo en http://localhost%s\n", port)
-	if err := http.ListenAndServe(port, nil); err != nil {
+	//con router definimos nuestro propio MUX para que maneje las peticiones
+	if err := http.ListenAndServe(port, router); err != nil {
 		log.Fatal(err)
 	}
 }
