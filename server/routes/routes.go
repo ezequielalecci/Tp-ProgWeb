@@ -29,27 +29,30 @@ func RegisterRoutes(queries *db.Queries) http.Handler {
 
 	// Equipos
 	mux.HandleFunc("GET /api/equipos", equiposH.GetEquipos)
-	mux.HandleFunc("POST /api/equipos", equiposH.CreateEquipo)
-	mux.HandleFunc("PUT /api/equipos", equiposH.UpdateEquipos)
-	mux.HandleFunc("DELETE /api/equipos", equiposH.DeleteEquipo)
+	mux.HandleFunc("GET /api/equipos/{id}", equiposH.GetEquipoByID)
+	mux.HandleFunc("POST /api/equipos", equiposH.CrearEquipo)
+	mux.HandleFunc("PUT /api/equipos/{id}", equiposH.UpdateEquipo)
+	mux.HandleFunc("DELETE /api/equipos/{id}", equiposH.DeleteEquipo)
 
 	// Jugadores
-	mux.HandleFunc("GET /api/jugadores", jugadoresH.GetJugador)
+	mux.HandleFunc("GET /api/jugadores", jugadoresH.GetJugadores)
+	mux.HandleFunc("GET /api/jugador/{id}", jugadoresH.GetJugador)
 	mux.HandleFunc("GET /api/jugadores/equipo", jugadoresH.ListJugadoresByEquipo)
-	mux.HandleFunc("GET /api/jugadores/mejor", jugadoresH.GetMejorJugadorByEquipo)
-	mux.HandleFunc("POST /api/jugadores", jugadoresH.CreateJugador)
-	mux.HandleFunc("PUT /api/jugadores/stats", jugadoresH.UpdateJugadorStats)
-	mux.HandleFunc("DELETE /api/jugadores", jugadoresH.DeleteJugador)
+	mux.HandleFunc("GET /api/equipos/{equipo_id}/mejor-jugador", jugadoresH.GetMejorJugadorByEquipo)
+	mux.HandleFunc("POST /api/jugador", jugadoresH.CreateJugador)
+	mux.HandleFunc("PUT /api/jugador/{id}/stats", jugadoresH.UpdateJugadorStats)
+	mux.HandleFunc("DELETE /api/jugador/{id}", jugadoresH.DeleteJugador)
 
 	// Partidos
 	mux.HandleFunc("GET /api/partidos", partidosH.ListPartidos)
-	mux.HandleFunc("GET /api/partidos/detalle", partidosH.GetPartido)
-	mux.HandleFunc("GET /api/partidos/ultimo", partidosH.GetUltimoPartidoByEquipo)
-	mux.HandleFunc("GET /api/partidos/ultimo-finalizado", partidosH.GetUltimoPartidoFinalizadoByEquipo)
-	mux.HandleFunc("GET /api/partidos/ultimo-detalle", partidosH.GetUltimoPartidoConDetalleByEquipo)
-	mux.HandleFunc("POST /api/partidos", partidosH.CreatePartido)
-	mux.HandleFunc("PUT /api/partidos/resultado", partidosH.UpdateResultadoPartido)
-	mux.HandleFunc("DELETE /api/partidos", partidosH.DeletePartido)
+	mux.HandleFunc("GET /api/partidos/{id}", partidosH.GetPartido)
+	mux.HandleFunc("POST /api/partidos", partidosH.CrearPartido)
+	mux.HandleFunc("PUT /api/partidos/{id}/resultado", partidosH.UpdateResultadoPartido)
+	mux.HandleFunc("DELETE /api/partidos/{id}", partidosH.DeletePartido)
+
+	mux.HandleFunc("GET /api/equipos/{equipo_id}/partidos/ultimo", partidosH.GetUltimoPartidoByEquipo)
+	mux.HandleFunc("GET /api/equipos/{equipo_id}/partidos/ultimo-finalizado", partidosH.GetUltimoPartidoFinalizadoByEquipo)
+	mux.HandleFunc("GET /api/equipos/{equipo_id}/partidos/ultimo-detalle", partidosH.GetUltimoPartidoConDetalleByEquipo)
 
 	return mux
 }

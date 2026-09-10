@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
 
 	database "tpweb/db/sqlc"
 )
@@ -19,7 +21,8 @@ func NewAPIJugadoresHandler(q *database.Queries) *APIJugadoresHandler {
 }
 
 func (h *APIJugadoresHandler) GetJugador(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+
+	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		http.Error(w, "ID inválido", http.StatusBadRequest)
@@ -34,6 +37,17 @@ func (h *APIJugadoresHandler) GetJugador(w http.ResponseWriter, r *http.Request)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(jugador)
+}
+
+func (h *APIJugadoresHandler) GetJugadores(w http.ResponseWriter, r *http.Request) {
+	jugadores, err := h.queries.GetJugadores(r.Context())
+	if err != nil {
+		http.Error(w, "Error al obtener los jugadores", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(jugadores)
 }
 
 func (h *APIJugadoresHandler) ListJugadoresByEquipo(w http.ResponseWriter, r *http.Request) {
@@ -55,15 +69,41 @@ func (h *APIJugadoresHandler) ListJugadoresByEquipo(w http.ResponseWriter, r *ht
 }
 
 func (h *APIJugadoresHandler) CreateJugador(w http.ResponseWriter, r *http.Request) {
-	var params database.CreateJugadorParams
-	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
-		http.Error(w, "Payload JSON inválido", http.StatusBadRequest)
+	var req CreateJugadorRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Payload JSON inválido: "+err.Error(), http.StatusBadRequest)
 		return
+	}
+
+	// Parsear fecha flexible (AAAA-MM-DD)
+	fechaNac, err := time.Parse("2006-01-02", req.FechaNacimiento)
+	if err != nil {
+		http.Error(w, "Formato de fecha inválido (debe ser AAAA-MM-DD)", http.StatusBadRequest)
+		return
+	}
+
+	params := database.CreateJugadorParams{
+		EquipoID:        req.EquipoID,
+		Nombre:          req.Nombre,
+		Posicion:        req.Posicion,
+		FechaNacimiento: fechaNac,
+		MediaGeneral:    req.MediaGeneral,
+		Altura:          req.Altura,
+		Ritmo:           req.Ritmo,
+		Tiro:            req.Tiro,
+		Pase:            req.Pase,
+		Regate:          req.Regate,
+		Defensa:         req.Defensa,
+		Fisico:          req.Fisico,
+	}
+
+	if req.FotoUrl != nil {
+		params.FotoUrl = sql.NullString{String: *req.FotoUrl, Valid: true}
 	}
 
 	jugador, err := h.queries.CreateJugador(r.Context(), params)
 	if err != nil {
-		http.Error(w, "Error al crear jugador: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Error al crear jugador", http.StatusInternalServerError)
 		return
 	}
 
@@ -73,15 +113,28 @@ func (h *APIJugadoresHandler) CreateJugador(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *APIJugadoresHandler) UpdateJugadorStats(w http.ResponseWriter, r *http.Request) {
-	var params database.UpdateJugadorStatsParams
-	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
-		http.Error(w, "Payload JSON inválido", http.StatusBadRequest)
+	idStr := r.PathValue("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "ID de jugador inválido", http.StatusBadRequest)
 		return
+	}
+
+	var req UpdateJugadorStatsRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Payload JSON inválido: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	params := database.UpdateJugadorStatsParams{
+		ID:          int32(id),
+		Goles:       req.Goles,
+		Asistencias: req.Asistencias,
 	}
 
 	jugador, err := h.queries.UpdateJugadorStats(r.Context(), params)
 	if err != nil {
-		http.Error(w, "Error al actualizar estadísticas: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Error al actualizar estadísticas", http.StatusInternalServerError)
 		return
 	}
 
@@ -90,7 +143,7 @@ func (h *APIJugadoresHandler) UpdateJugadorStats(w http.ResponseWriter, r *http.
 }
 
 func (h *APIJugadoresHandler) DeleteJugador(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		http.Error(w, "ID inválido", http.StatusBadRequest)
@@ -107,7 +160,8 @@ func (h *APIJugadoresHandler) DeleteJugador(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *APIJugadoresHandler) GetMejorJugadorByEquipo(w http.ResponseWriter, r *http.Request) {
-	equipoIDStr := r.URL.Query().Get("equipo_id")
+
+	equipoIDStr := r.PathValue("equipo_id")
 	equipoID, err := strconv.Atoi(equipoIDStr)
 	if err != nil {
 		http.Error(w, "ID de equipo inválido", http.StatusBadRequest)
@@ -116,7 +170,7 @@ func (h *APIJugadoresHandler) GetMejorJugadorByEquipo(w http.ResponseWriter, r *
 
 	jugador, err := h.queries.GetMejorJugadorByEquipo(r.Context(), int32(equipoID))
 	if err != nil {
-		http.Error(w, "Jugador no encontrado", http.StatusNotFound)
+		http.Error(w, "No se encontró el mejor jugador para este equipo", http.StatusNotFound)
 		return
 	}
 

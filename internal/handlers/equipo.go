@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -45,7 +46,7 @@ func (h *APIEquiposHandler) GetEquipos(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *APIEquiposHandler) GetEquipoByID(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		http.Error(w, "ID de equipo inválido", http.StatusBadRequest)
@@ -62,17 +63,27 @@ func (h *APIEquiposHandler) GetEquipoByID(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(equipo)
 }
 
-func (h *APIEquiposHandler) CreateEquipo(w http.ResponseWriter, r *http.Request) {
-	var params database.CreateEquipoParams
-
-	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
-		http.Error(w, "Payload JSON inválido", http.StatusBadRequest)
+func (h *APIEquiposHandler) CrearEquipo(w http.ResponseWriter, r *http.Request) {
+	var req CreateEquipoRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Payload JSON inválido: "+err.Error(), http.StatusBadRequest)
 		return
+	}
+
+	params := database.CreateEquipoParams{
+		Nombre:          req.Nombre,
+		FormacionActual: req.FormacionActual,
+		Valoracion:      req.Valoracion,
+		PosicionTabla:   req.PosicionTabla,
+	}
+
+	if req.EscudoUrl != nil {
+		params.EscudoUrl = sql.NullString{String: *req.EscudoUrl, Valid: true}
 	}
 
 	equipo, err := h.queries.CreateEquipo(r.Context(), params)
 	if err != nil {
-		http.Error(w, "Error al crear el equipo: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Error al crear equipo", http.StatusInternalServerError)
 		return
 	}
 
@@ -81,17 +92,40 @@ func (h *APIEquiposHandler) CreateEquipo(w http.ResponseWriter, r *http.Request)
 	json.NewEncoder(w).Encode(equipo)
 }
 
-func (h *APIEquiposHandler) UpdateEquipos(w http.ResponseWriter, r *http.Request) {
-	var params database.UpdateEquipoParams
-
-	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
-		http.Error(w, "Payload JSON inválido", http.StatusBadRequest)
+func (h *APIEquiposHandler) UpdateEquipo(w http.ResponseWriter, r *http.Request) {
+	idStr := r.PathValue("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "ID de equipo inválido", http.StatusBadRequest)
 		return
+	}
+
+	var req UpdateEquipoRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Payload JSON inválido: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Convertir DTO a los tipos de sql.Null* que requiere sqlc
+	params := database.UpdateEquipoParams{
+		ID:              int32(id),
+		Nombre:          req.Nombre,
+		FormacionActual: req.FormacionActual,
+		Valoracion:      req.Valoracion,
+		PosicionTabla:   req.PosicionTabla,
+	}
+
+	if req.EscudoUrl != nil {
+		params.EscudoUrl = sql.NullString{String: *req.EscudoUrl, Valid: true}
+	}
+
+	if req.MejorJugador != nil {
+		params.MejorJugador = sql.NullInt32{Int32: *req.MejorJugador, Valid: true}
 	}
 
 	equipoActualizado, err := h.queries.UpdateEquipo(r.Context(), params)
 	if err != nil {
-		http.Error(w, "Error al actualizar el equipo: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Error al actualizar el equipo", http.StatusInternalServerError)
 		return
 	}
 
@@ -100,7 +134,8 @@ func (h *APIEquiposHandler) UpdateEquipos(w http.ResponseWriter, r *http.Request
 }
 
 func (h *APIEquiposHandler) DeleteEquipo(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+
+	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		http.Error(w, "ID de equipo inválido", http.StatusBadRequest)
@@ -109,7 +144,7 @@ func (h *APIEquiposHandler) DeleteEquipo(w http.ResponseWriter, r *http.Request)
 
 	err = h.queries.DeleteEquipo(r.Context(), int32(id))
 	if err != nil {
-		http.Error(w, "Error al eliminar el equipo: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Error al eliminar el equipo", http.StatusInternalServerError)
 		return
 	}
 

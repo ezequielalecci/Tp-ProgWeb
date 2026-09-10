@@ -72,6 +72,9 @@ LIMIT 1;
 SELECT * FROM "jugadores"
 WHERE "id" = $1 LIMIT 1;
 
+-- name: GetJugadores :many
+SELECT * FROM "jugadores";
+
 -- name: ListJugadoresByEquipo :many
 SELECT * FROM "jugadores"
 WHERE "equipo_id" = $1
@@ -101,8 +104,8 @@ RETURNING *;
 -- name: UpdateJugadorStats :one
 UPDATE "jugadores"
 SET 
-    "goles" = "goles" + $2,
-    "asistencias" = "asistencias" + $3
+    "goles" = $2,
+    "asistencias" = $3
 WHERE "id" = $1
 RETURNING *;
 

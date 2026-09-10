@@ -17,7 +17,7 @@ func NewAPIPartidosHandler(q *db.Queries) *APIPartidosHandler {
 }
 
 func (h *APIPartidosHandler) GetPartido(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		http.Error(w, "ID inválido", http.StatusBadRequest)
@@ -45,34 +45,57 @@ func (h *APIPartidosHandler) ListPartidos(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(partidos)
 }
 
-func (h *APIPartidosHandler) CreatePartido(w http.ResponseWriter, r *http.Request) {
-	var params db.CreatePartidoParams
-	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
-		http.Error(w, "Payload JSON inválido", http.StatusBadRequest)
+func (h *APIPartidosHandler) CrearPartido(w http.ResponseWriter, r *http.Request) {
+	// 1. Decodificar la petición JSON entrante
+	var req CreatePartidoRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Fecha o JSON inválido: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	// 2. Mapear los datos al struct generado por sqlc
+	params := db.CreatePartidoParams{
+		EquipoLocalID:     req.EquipoLocalID,
+		EquipoVisitanteID: req.EquipoVisitanteID,
+		Fecha:             req.Fecha.Time, // Pasa el time.Time compatible con sqlc
+		Estado:            req.Estado,
+	}
+
+	// 3. Ejecutar la consulta en la base de datos
 	partido, err := h.queries.CreatePartido(r.Context(), params)
 	if err != nil {
-		http.Error(w, "Error al crear partido: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(partido)
 }
 
 func (h *APIPartidosHandler) UpdateResultadoPartido(w http.ResponseWriter, r *http.Request) {
-	var params db.UpdateResultadoPartidoParams
-	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
-		http.Error(w, "Payload JSON inválido", http.StatusBadRequest)
+	idStr := r.PathValue("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "ID de partido inválido", http.StatusBadRequest)
 		return
+	}
+
+	var req UpdateResultadoPartidoRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Payload JSON inválido: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	params := db.UpdateResultadoPartidoParams{
+		ID:             int32(id),
+		GolesLocal:     req.GolesLocal,
+		GolesVisitante: req.GolesVisitante,
+		Estado:         req.Estado,
 	}
 
 	partido, err := h.queries.UpdateResultadoPartido(r.Context(), params)
 	if err != nil {
-		http.Error(w, "Error al actualizar resultado: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Error al actualizar el resultado del partido", http.StatusInternalServerError)
 		return
 	}
 
@@ -81,7 +104,7 @@ func (h *APIPartidosHandler) UpdateResultadoPartido(w http.ResponseWriter, r *ht
 }
 
 func (h *APIPartidosHandler) DeletePartido(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		http.Error(w, "ID inválido", http.StatusBadRequest)
@@ -90,7 +113,7 @@ func (h *APIPartidosHandler) DeletePartido(w http.ResponseWriter, r *http.Reques
 
 	err = h.queries.DeletePartido(r.Context(), int32(id))
 	if err != nil {
-		http.Error(w, "Error al eliminar partido: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Error al eliminar el partido", http.StatusInternalServerError)
 		return
 	}
 
@@ -98,7 +121,7 @@ func (h *APIPartidosHandler) DeletePartido(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *APIPartidosHandler) GetUltimoPartidoByEquipo(w http.ResponseWriter, r *http.Request) {
-	equipoIDStr := r.URL.Query().Get("equipo_id")
+	equipoIDStr := r.PathValue("equipo_id")
 	equipoID, err := strconv.Atoi(equipoIDStr)
 	if err != nil {
 		http.Error(w, "ID de equipo inválido", http.StatusBadRequest)
@@ -116,7 +139,7 @@ func (h *APIPartidosHandler) GetUltimoPartidoByEquipo(w http.ResponseWriter, r *
 }
 
 func (h *APIPartidosHandler) GetUltimoPartidoFinalizadoByEquipo(w http.ResponseWriter, r *http.Request) {
-	equipoIDStr := r.URL.Query().Get("equipo_id")
+	equipoIDStr := r.PathValue("equipo_id")
 	equipoID, err := strconv.Atoi(equipoIDStr)
 	if err != nil {
 		http.Error(w, "ID de equipo inválido", http.StatusBadRequest)
@@ -134,7 +157,7 @@ func (h *APIPartidosHandler) GetUltimoPartidoFinalizadoByEquipo(w http.ResponseW
 }
 
 func (h *APIPartidosHandler) GetUltimoPartidoConDetalleByEquipo(w http.ResponseWriter, r *http.Request) {
-	equipoIDStr := r.URL.Query().Get("equipo_id")
+	equipoIDStr := r.PathValue("equipo_id")
 	equipoID, err := strconv.Atoi(equipoIDStr)
 	if err != nil {
 		http.Error(w, "ID de equipo inválido", http.StatusBadRequest)

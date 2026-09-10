@@ -247,6 +247,50 @@ func (q *Queries) GetJugador(ctx context.Context, id int32) (Jugadore, error) {
 	return i, err
 }
 
+const getJugadores = `-- name: GetJugadores :many
+SELECT id, equipo_id, nombre, posicion, fecha_nacimiento, media_general, altura, ritmo, tiro, pase, regate, defensa, fisico, goles, asistencias, foto_url FROM "jugadores"
+`
+
+func (q *Queries) GetJugadores(ctx context.Context) ([]Jugadore, error) {
+	rows, err := q.db.QueryContext(ctx, getJugadores)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Jugadore
+	for rows.Next() {
+		var i Jugadore
+		if err := rows.Scan(
+			&i.ID,
+			&i.EquipoID,
+			&i.Nombre,
+			&i.Posicion,
+			&i.FechaNacimiento,
+			&i.MediaGeneral,
+			&i.Altura,
+			&i.Ritmo,
+			&i.Tiro,
+			&i.Pase,
+			&i.Regate,
+			&i.Defensa,
+			&i.Fisico,
+			&i.Goles,
+			&i.Asistencias,
+			&i.FotoUrl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getMejorJugadorByEquipo = `-- name: GetMejorJugadorByEquipo :one
 SELECT id, equipo_id, nombre, posicion, fecha_nacimiento, media_general, altura, ritmo, tiro, pase, regate, defensa, fisico, goles, asistencias, foto_url FROM "jugadores"
 WHERE "equipo_id" = $1
@@ -564,8 +608,8 @@ func (q *Queries) UpdateEquipo(ctx context.Context, arg UpdateEquipoParams) (Equ
 const updateJugadorStats = `-- name: UpdateJugadorStats :one
 UPDATE "jugadores"
 SET 
-    "goles" = "goles" + $2,
-    "asistencias" = "asistencias" + $3
+    "goles" = $2,
+    "asistencias" = $3
 WHERE "id" = $1
 RETURNING id, equipo_id, nombre, posicion, fecha_nacimiento, media_general, altura, ritmo, tiro, pase, regate, defensa, fisico, goles, asistencias, foto_url
 `
