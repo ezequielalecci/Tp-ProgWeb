@@ -28,6 +28,7 @@ esta seria la estructura de la base de datos
 
 PARA FUTURAS EDICIONES:
 + Si se nos solicita agregaremos .env y .gitignore para contraseñas y archivos que no sean necesarios
++ Reestructurar el contenido de los handlers para abstraerlos de la capa de datos y generar una capa de negocios totalmente independiente de la tecnologia (Por ejemplo, algo que siga esta estructura: Handler → Service → Repository → Database)
 
 DETALLES DE NUESTRA PÁGINA:
 Nuestra página consta de un tablero que enseña equipos cargados por el administrador, donde los usuarios que la utilicen pueden ver información acerca de los mismos. Por ejemplo, plantel, valoración media del equipo, mejores jugadores, estadísticas individuales de cada jugador, últimos resultados de ese equipo, posición en la tabla, etc.
