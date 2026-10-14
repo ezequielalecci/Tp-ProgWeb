@@ -52,3 +52,19 @@ ALTER TABLE "equipos"
 ADD CONSTRAINT fk_equipos_mejor_jugador 
 FOREIGN KEY ("mejor_jugador") REFERENCES "jugadores"("id") 
 ON DELETE SET NULL;
+
+-- Permitir nulos en las columnas de equipos
+ALTER TABLE partidos 
+  ALTER COLUMN equipo_local_id DROP NOT NULL,
+  ALTER COLUMN equipo_visitante_id DROP NOT NULL;
+
+-- Cambiar las FK a ON DELETE SET NULL en lugar de CASCADE
+ALTER TABLE partidos 
+  DROP CONSTRAINT IF EXISTS fk_partidos_equipo_local,
+  ADD CONSTRAINT fk_partidos_equipo_local 
+    FOREIGN KEY (equipo_local_id) REFERENCES equipos(id) ON DELETE SET NULL;
+
+ALTER TABLE partidos 
+  DROP CONSTRAINT IF EXISTS fk_partidos_equipo_visitante,
+  ADD CONSTRAINT fk_partidos_equipo_visitante 
+    FOREIGN KEY (equipo_visitante_id) REFERENCES equipos(id) ON DELETE SET NULL;

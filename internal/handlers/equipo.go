@@ -1,150 +1,131 @@
 package handlers
 
 import (
-	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
-	database "tpweb/db/sqlc"
+	"tpweb/internal/dto"
+	"tpweb/internal/service"
 )
 
-// APIHandler guarda la referencia a las consultas de sqlc
+// APIEquiposHandler delega la lógica de negocio a EquipoService
 type APIEquiposHandler struct {
-	queries *database.Queries
+	service *service.EquipoService
 }
 
-// constructor para instanciar el handler desde el main
-func NewAPIEquiposHandler(q *database.Queries) *APIEquiposHandler {
+// NewAPIEquiposHandler es el constructor para instanciar el handler inyectándole el servicio
+func NewAPIEquiposHandler(s *service.EquipoService) *APIEquiposHandler {
 	return &APIEquiposHandler{
-		queries: q,
+		service: s,
 	}
 }
 
+// GET /api/equipos - Obtener todos los equipos
 func (h *APIEquiposHandler) GetEquipos(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Método no permitido"})
-		return
-	}
-
-	equipos, err := h.queries.ListEquipos(r.Context())
+	equipos, err := h.service.GetEquipos(r.Context())
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Error de base de datos"})
+		respondError(w, http.StatusInternalServerError, "Error al obtener los equipos")
 		return
 	}
 
-	if equipos == nil {
-		equipos = []database.Equipo{}
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(equipos)
+	respondJSON(w, http.StatusOK, equipos)
 }
 
+// GET /api/equipos/{id} - Obtener equipo por ID
 func (h *APIEquiposHandler) GetEquipoByID(w http.ResponseWriter, r *http.Request) {
 	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "ID de equipo inválido", http.StatusBadRequest)
+		respondError(w, http.StatusBadRequest, "ID de equipo inválido")
 		return
 	}
 
-	equipo, err := h.queries.GetEquipo(r.Context(), int32(id))
+	equipo, err := h.service.GetEquipoByID(r.Context(), int32(id))
 	if err != nil {
-		http.Error(w, "Equipo no encontrado", http.StatusNotFound)
+		if errors.Is(err, service.ErrEquipoNotFound) {
+			respondError(w, http.StatusNotFound, "Equipo no encontrado")
+			return
+		}
+		respondError(w, http.StatusInternalServerError, "Error al buscar el equipo")
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(equipo)
+	respondJSON(w, http.StatusOK, equipo)
 }
 
+// POST /api/equipos - Crear un nuevo equipo
 func (h *APIEquiposHandler) CrearEquipo(w http.ResponseWriter, r *http.Request) {
-	var req CreateEquipoRequest
+	var req dto.CreateEquipoRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Payload JSON inválido: "+err.Error(), http.StatusBadRequest)
+		respondError(w, http.StatusBadRequest, "Payload JSON inválido: "+err.Error())
 		return
 	}
 
-	params := database.CreateEquipoParams{
-		Nombre:          req.Nombre,
-		FormacionActual: req.FormacionActual,
-		Valoracion:      req.Valoracion,
-		PosicionTabla:   req.PosicionTabla,
+	if err := req.Validate(); err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
 	}
 
-	if req.EscudoUrl != nil {
-		params.EscudoUrl = sql.NullString{String: *req.EscudoUrl, Valid: true}
-	}
-
-	equipo, err := h.queries.CreateEquipo(r.Context(), params)
+	equipo, err := h.service.CrearEquipo(r.Context(), req)
 	if err != nil {
-		http.Error(w, "Error al crear equipo", http.StatusInternalServerError)
+		respondError(w, http.StatusInternalServerError, "Error al crear el equipo")
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(equipo)
+	respondJSON(w, http.StatusCreated, equipo)
 }
 
+// PUT /api/equipos/{id} - Actualizar equipo existente
 func (h *APIEquiposHandler) UpdateEquipo(w http.ResponseWriter, r *http.Request) {
 	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "ID de equipo inválido", http.StatusBadRequest)
+		respondError(w, http.StatusBadRequest, "ID de equipo inválido")
 		return
 	}
 
-	var req UpdateEquipoRequest
+	var req dto.UpdateEquipoRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Payload JSON inválido: "+err.Error(), http.StatusBadRequest)
+		respondError(w, http.StatusBadRequest, "Payload JSON inválido: "+err.Error())
 		return
 	}
 
-	// Convertir DTO a los tipos de sql.Null* que requiere sqlc
-	params := database.UpdateEquipoParams{
-		ID:              int32(id),
-		Nombre:          req.Nombre,
-		FormacionActual: req.FormacionActual,
-		Valoracion:      req.Valoracion,
-		PosicionTabla:   req.PosicionTabla,
+	if err := req.Validate(); err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
 	}
 
-	if req.EscudoUrl != nil {
-		params.EscudoUrl = sql.NullString{String: *req.EscudoUrl, Valid: true}
-	}
-
-	if req.MejorJugador != nil {
-		params.MejorJugador = sql.NullInt32{Int32: *req.MejorJugador, Valid: true}
-	}
-
-	equipoActualizado, err := h.queries.UpdateEquipo(r.Context(), params)
+	equipoActualizado, err := h.service.UpdateEquipo(r.Context(), int32(id), req)
 	if err != nil {
-		http.Error(w, "Error al actualizar el equipo", http.StatusInternalServerError)
+		if errors.Is(err, service.ErrEquipoNotFound) {
+			respondError(w, http.StatusNotFound, "El equipo no existe")
+			return
+		}
+		respondError(w, http.StatusInternalServerError, "Error al actualizar el equipo")
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(equipoActualizado)
+	respondJSON(w, http.StatusOK, equipoActualizado)
 }
 
+// DELETE /api/equipos/{id} - Eliminar equipo
 func (h *APIEquiposHandler) DeleteEquipo(w http.ResponseWriter, r *http.Request) {
-
 	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "ID de equipo inválido", http.StatusBadRequest)
+		respondError(w, http.StatusBadRequest, "ID de equipo inválido")
 		return
 	}
 
-	err = h.queries.DeleteEquipo(r.Context(), int32(id))
+	err = h.service.DeleteEquipo(r.Context(), int32(id))
 	if err != nil {
-		http.Error(w, "Error al eliminar el equipo", http.StatusInternalServerError)
+		if errors.Is(err, service.ErrEquipoNotFound) {
+			respondError(w, http.StatusNotFound, "El equipo a eliminar no existe")
+			return
+		}
+		respondError(w, http.StatusInternalServerError, "Error al eliminar el equipo")
 		return
 	}
 

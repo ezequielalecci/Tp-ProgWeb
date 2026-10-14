@@ -142,10 +142,10 @@ RETURNING id, equipo_local_id, equipo_visitante_id, goles_local, goles_visitante
 `
 
 type CreatePartidoParams struct {
-	EquipoLocalID     int32     `json:"equipo_local_id"`
-	EquipoVisitanteID int32     `json:"equipo_visitante_id"`
-	Fecha             time.Time `json:"fecha"`
-	Estado            string    `json:"estado"`
+	EquipoLocalID     sql.NullInt32 `json:"equipo_local_id"`
+	EquipoVisitanteID sql.NullInt32 `json:"equipo_visitante_id"`
+	Fecha             time.Time     `json:"fecha"`
+	Estado            string        `json:"estado"`
 }
 
 func (q *Queries) CreatePartido(ctx context.Context, arg CreatePartidoParams) (Partido, error) {
@@ -195,6 +195,17 @@ WHERE "id" = $1
 
 func (q *Queries) DeletePartido(ctx context.Context, id int32) error {
 	_, err := q.db.ExecContext(ctx, deletePartido, id)
+	return err
+}
+
+const deletePartidosPendientesByEquipo = `-- name: DeletePartidosPendientesByEquipo :exec
+DELETE FROM partidos 
+WHERE (equipo_local_id = $1 OR equipo_visitante_id = $1) 
+  AND estado != 'FINALIZADO'
+`
+
+func (q *Queries) DeletePartidosPendientesByEquipo(ctx context.Context, equipoLocalID sql.NullInt32) error {
+	_, err := q.db.ExecContext(ctx, deletePartidosPendientesByEquipo, equipoLocalID)
 	return err
 }
 
@@ -349,7 +360,7 @@ ORDER BY "fecha" DESC, "id" DESC
 LIMIT 1
 `
 
-func (q *Queries) GetUltimoPartidoByEquipo(ctx context.Context, equipoLocalID int32) (Partido, error) {
+func (q *Queries) GetUltimoPartidoByEquipo(ctx context.Context, equipoLocalID sql.NullInt32) (Partido, error) {
 	row := q.db.QueryRowContext(ctx, getUltimoPartidoByEquipo, equipoLocalID)
 	var i Partido
 	err := row.Scan(
@@ -399,7 +410,7 @@ type GetUltimoPartidoConDetalleByEquipoRow struct {
 	VisitanteEscudo sql.NullString `json:"visitante_escudo"`
 }
 
-func (q *Queries) GetUltimoPartidoConDetalleByEquipo(ctx context.Context, equipoLocalID int32) (GetUltimoPartidoConDetalleByEquipoRow, error) {
+func (q *Queries) GetUltimoPartidoConDetalleByEquipo(ctx context.Context, equipoLocalID sql.NullInt32) (GetUltimoPartidoConDetalleByEquipoRow, error) {
 	row := q.db.QueryRowContext(ctx, getUltimoPartidoConDetalleByEquipo, equipoLocalID)
 	var i GetUltimoPartidoConDetalleByEquipoRow
 	err := row.Scan(
@@ -426,7 +437,7 @@ ORDER BY "fecha" DESC, "id" DESC
 LIMIT 1
 `
 
-func (q *Queries) GetUltimoPartidoFinalizadoByEquipo(ctx context.Context, equipoLocalID int32) (Partido, error) {
+func (q *Queries) GetUltimoPartidoFinalizadoByEquipo(ctx context.Context, equipoLocalID sql.NullInt32) (Partido, error) {
 	row := q.db.QueryRowContext(ctx, getUltimoPartidoFinalizadoByEquipo, equipoLocalID)
 	var i Partido
 	err := row.Scan(

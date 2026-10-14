@@ -39,11 +39,11 @@ type Jugadore struct {
 }
 
 type Partido struct {
-	ID                int32     `json:"id"`
-	EquipoLocalID     int32     `json:"equipo_local_id"`
-	EquipoVisitanteID int32     `json:"equipo_visitante_id"`
-	GolesLocal        int16     `json:"goles_local"`
-	GolesVisitante    int16     `json:"goles_visitante"`
-	Fecha             time.Time `json:"fecha"`
-	Estado            string    `json:"estado"`
+	ID                int32         `json:"id"`
+	EquipoLocalID     sql.NullInt32 `json:"equipo_local_id"`
+	EquipoVisitanteID sql.NullInt32 `json:"equipo_visitante_id"`
+	GolesLocal        int16         `json:"goles_local"`
+	GolesVisitante    int16         `json:"goles_visitante"`
+	Fecha             time.Time     `json:"fecha"`
+	Estado            string        `json:"estado"`
 }

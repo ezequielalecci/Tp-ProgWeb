@@ -1,3 +1,4 @@
+
 **REQUISITOS PREVIOS:**
 - Docker y Docker Compose instalados y en ejecución.
 - Puertos `8080` (HTTP) y `5432` (PostgreSQL) libres en el equipo.

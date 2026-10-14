@@ -150,3 +150,10 @@ RETURNING *;
 -- name: DeletePartido :exec
 DELETE FROM "partidos"
 WHERE "id" = $1;
+
+
+
+-- name: DeletePartidosPendientesByEquipo :exec
+DELETE FROM partidos 
+WHERE (equipo_local_id = $1 OR equipo_visitante_id = $1) 
+  AND estado != 'FINALIZADO';
