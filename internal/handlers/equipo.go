@@ -22,6 +22,14 @@ func NewAPIEquiposHandler(s *service.EquipoService) *APIEquiposHandler {
 	}
 }
 
+func (h *APIEquiposHandler) RegisterEquiposRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("GET /api/equipos", h.GetEquipos)
+	mux.HandleFunc("GET /api/equipos/{id}", h.GetEquipoByID)
+	mux.HandleFunc("POST /api/equipos", h.CrearEquipo)
+	mux.HandleFunc("PUT /api/equipos/{id}", h.UpdateEquipo)
+	mux.HandleFunc("DELETE /api/equipos/{id}", h.DeleteEquipo)
+}
+
 // GET /api/equipos - Obtener todos los equipos
 func (h *APIEquiposHandler) GetEquipos(w http.ResponseWriter, r *http.Request) {
 	equipos, err := h.service.GetEquipos(r.Context())

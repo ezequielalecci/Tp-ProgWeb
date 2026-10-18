@@ -1,647 +1,344 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Gestión de Fútbol</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background: #f4f4f9; }
-        h1, h2 { color: #333; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: #fff; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #007bff; color: white; }
-        button { cursor: pointer; padding: 6px 12px; margin-right: 5px; border: none; border-radius: 4px; font-weight: bold; }
-        .btn-update { background: #ffc107; color: #000; }
-        .btn-delete { background: #dc3545; color: #fff; }
-        .btn-create { background: #28a745; color: #fff; padding: 8px 12px; margin-top: 10px; display: inline-block; }
-        
-        /* Formulario estructurado con etiquetas */
-        .form-container { background: #fff; padding: 15px; border: 1px solid #ddd; margin-bottom: 20px; border-radius: 4px; }
-        .form-grid { display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; }
-        .form-group { display: flex; flex-direction: column; }
-        .form-group label { font-size: 13px; font-weight: bold; margin-bottom: 4px; color: #555; }
-        .form-group input { padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; }
-
-        /* Contenedor de notificaciones flotantes */
-        #alert-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            max-width: 400px;
-        }
-        .alert {
-            padding: 12px 16px;
-            border-radius: 4px;
-            margin-bottom: 10px;
-            color: #fff;
-            font-weight: bold;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: opacity 0.3s ease-in-out;
-        }
-        .alert-success { background-color: #28a745; }
-        .alert-error { background-color: #dc3545; }
-        .alert-close {
-            margin-left: 15px;
-            cursor: pointer;
-            font-weight: bold;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 16px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resultados · Equipos, jugadores y partidos</title>
+<style>
+:root{
+  --bg:#f3f5ef; --surface:#fff; --ink:#14201a; --muted:#5d6b62; --line:#dde3d8;
+  --pitch:#1f5c3a; --pitch-ink:#fff; --accent:#e8a317; --danger:#b3261e; --ok:#1f7a45;
+  --head:#e9eee4;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0f1712; --surface:#17221b; --ink:#e8efe9; --muted:#93a398; --line:#2a3a2f;
+    --pitch:#3a9a64; --pitch-ink:#08130c; --accent:#f0b429; --danger:#ff8a80; --ok:#6fd09a; --head:#1d2b22;}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Trebuchet MS","Segoe UI",system-ui,sans-serif}
+header{background:var(--pitch);color:var(--pitch-ink);padding:22px 24px 0;
+  background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 60px,transparent 60px 120px)}
+.wrap{max-width:1200px;margin:0 auto}
+h1{margin:0 0 4px;font:700 26px/1.2 Georgia,"Times New Roman",serif}
+header p{margin:0 0 16px;opacity:.85}
+nav{display:flex;gap:4px}
+nav button{background:transparent;color:inherit;border:0;padding:10px 20px;font:inherit;font-weight:600;cursor:pointer;
+  border-radius:8px 8px 0 0;opacity:.75}
+nav button[aria-selected=true]{background:var(--bg);color:var(--ink);opacity:1}
+nav button:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+main{padding:20px 24px 60px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.toolbar .grow{flex:1}
+input,select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px 10px;width:100%}
+.btn{font:inherit;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:6px;cursor:pointer;width:auto}
+.btn.primary{background:var(--pitch);color:var(--pitch-ink);border-color:var(--pitch)}
+.btn.small{padding:4px 10px;font-size:13px}
+.btn:hover{filter:brightness(1.08)}
+.tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;min-width:640px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{background:var(--head);font-size:13px;color:var(--muted);position:sticky;top:0;cursor:pointer;user-select:none}
+th.num,td.num{text-align:right;font-variant-numeric:tabular-nums}
+tbody tr:hover{background:var(--head)}
+tbody tr:last-child td{border-bottom:0}
+td img{width:32px;height:32px;object-fit:cover;border-radius:50%;vertical-align:middle;background:var(--head)}
+.badge{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:700;border:1px solid currentColor}
+.PENDIENTE{color:var(--muted)} .JUGANDO{color:var(--accent)} .FINALIZADO{color:var(--ok)}
+.score{font:700 17px Georgia,serif;letter-spacing:.04em}
+.empty{padding:36px;text-align:center;color:var(--muted)}
+.count{color:var(--muted);font-size:13px}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);padding:0;width:min(560px,94vw)}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+dialog form{padding:20px}
+dialog h2{margin:0 0 14px;font:700 20px Georgia,serif}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:3px}
+.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+.acts{display:flex;gap:6px}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;margin:12px 0}
+.kv dt{color:var(--muted)} .kv dd{margin:0;word-break:break-word}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:10px 18px;border-radius:8px;color:#fff;font-weight:600;
+  display:none;z-index:10;max-width:90vw}
+#toast.ok{background:var(--ok)} #toast.err{background:var(--danger)}
+@media (prefers-reduced-motion:no-preference){#toast.show{animation:pop .2s}}
+@keyframes pop{from{opacity:0;transform:translate(-50%,8px)}}
+</style>
 </head>
 <body>
+<header>
+  <div class="wrap">
+    <h1>Resultados de la liga</h1>
+    <p>Consultá y cargá equipos, jugadores y partidos</p>
+    <nav role="tablist" id="tabs"></nav>
+  </div>
+</header>
+<main class="wrap">
+  <div class="toolbar">
+    <select id="teamFilter" aria-label="Filtrar por equipo" style="max-width:220px;display:none"></select>
+    <span class="count" id="count"></span>
+    <span class="grow"></span>
+    <button class="btn primary" id="add"></button>
+  </div>
+  <div class="tablewrap"><table><thead></thead><tbody></tbody></table></div>
+</main>
 
-    <!-- Banner Notificaciones -->
-    <div id="alert-container"></div>
+<dialog id="dlg"><form method="dialog" id="form"></form></dialog>
+<div id="toast" role="status"></div>
 
-    <h1>Panel de Administración</h1>
+<script>
+/* ---------- Configuración de endpoints (ajustá las rutas si tu API usa otras) ---------- */
+const ESTADOS = ["PENDIENTE","EN CURSO","FINALIZADO"];
+const ENT = {
+  equipos: {
+    label:"Equipos", singular:"equipo", path:"/equipos", del:id=>`/equipos/${id}`,
+    columns:[
+      {k:"escudo_url",t:"Escudo",type:"img"},{k:"id",t:"ID",num:1},{k:"nombre",t:"Nombre"},
+      {k:"formacion_actual",t:"Formación"},{k:"valoracion",t:"Valoración",num:1},
+      {k:"posicion_tabla",t:"Posición",num:1},{k:"mejor_jugador",t:"Mejor jugador",type:"jugador"}],
+    create:[
+      {k:"nombre",l:"Nombre",req:1},{k:"formacion_actual",l:"Formación actual",ph:"4-3-3"},
+      {k:"escudo_url",l:"URL del escudo",type:"url",opt:1},
+      {k:"valoracion",l:"Valoración",type:"number",min:0},{k:"posicion_tabla",l:"Posición en la tabla",type:"number",min:1}],
+    edit:{method:"PUT",path:id=>`/equipos/${id}`,fields:[
+      {k:"nombre",l:"Nombre",req:1},{k:"formacion_actual",l:"Formación actual"},
+      {k:"escudo_url",l:"URL del escudo",type:"url",opt:1},
+      {k:"mejor_jugador",l:"ID del mejor jugador",type:"number",min:1,opt:1},
+      {k:"valoracion",l:"Valoración",type:"number",min:0},{k:"posicion_tabla",l:"Posición en la tabla",type:"number",min:1}]}
+  },
+  jugadores: {
+    label:"Jugadores", singular:"jugador", path:"/jugadores", del:id=>`/jugadores/${id}`,
+    columns:[
+      {k:"foto_url",t:"Foto",type:"img"},{k:"id",t:"ID",num:1},{k:"nombre",t:"Nombre"},
+      {k:"equipo_id",t:"Equipo",type:"equipo"},{k:"posicion",t:"Pos."},{k:"fecha_nacimiento",t:"Nacimiento",type:"fecha"},
+      {k:"altura",t:"Altura"},{k:"media_general",t:"Media",num:1},{k:"ritmo",t:"RIT",num:1},{k:"tiro",t:"TIR",num:1},
+      {k:"pase",t:"PAS",num:1},{k:"regate",t:"REG",num:1},{k:"defensa",t:"DEF",num:1},{k:"fisico",t:"FIS",num:1},
+      {k:"goles",t:"Goles",num:1},{k:"asistencias",t:"Asist.",num:1}],
+    create:[
+      {k:"equipo_id",l:"Equipo",type:"equipo",req:1},{k:"nombre",l:"Nombre",req:1},{k:"posicion",l:"Posición",ph:"DEL",req:1},
+      {k:"fecha_nacimiento",l:"Fecha de nacimiento",type:"date",req:1},{k:"altura",l:"Altura",ph:"1.78 m"},
+      {k:"media_general",l:"Media general (0–99)",type:"number",min:0,max:99},
+      {k:"ritmo",l:"Ritmo",type:"number",min:0,max:99},{k:"tiro",l:"Tiro",type:"number",min:0,max:99},
+      {k:"pase",l:"Pase",type:"number",min:0,max:99},{k:"regate",l:"Regate",type:"number",min:0,max:99},
+      {k:"defensa",l:"Defensa",type:"number",min:0,max:99},{k:"fisico",l:"Físico",type:"number",min:0,max:99},
+      {k:"foto_url",l:"URL de la foto",type:"url",opt:1}],
+    edit:{method:"PUT",path:id=>`/jugadores/${id}/stats`,title:"Actualizar goles y asistencias",fields:[
+      {k:"goles",l:"Goles",type:"number",min:0},{k:"asistencias",l:"Asistencias",type:"number",min:0}]}
+  },
+  partidos: {
+    label:"Partidos", singular:"partido", path:"/partidos", del:id=>`/partidos/${id}`,
+    columns:[
+      {k:"id",t:"ID",num:1},{k:"fecha",t:"Fecha",type:"fecha"},{k:"equipo_local_id",t:"Local",type:"equipo"},
+      {k:"_marcador",t:"Resultado",type:"marcador"},{k:"equipo_visitante_id",t:"Visitante",type:"equipo"},
+      {k:"estado",t:"Estado",type:"estado"}],
+    create:[
+      {k:"equipo_local_id",l:"Equipo local",type:"equipo",req:1},{k:"equipo_visitante_id",l:"Equipo visitante",type:"equipo",req:1},
+      {k:"fecha",l:"Fecha",type:"date",req:1},{k:"estado",l:"Estado",type:"estado",req:1}],
+    edit:{method:"PUT",path:id=>`/partidos/${id}/resultado`,title:"Cargar resultado",fields:[
+      {k:"goles_local",l:"Goles local",type:"number",min:0},{k:"goles_visitante",l:"Goles visitante",type:"number",min:0},
+      {k:"estado",l:"Estado",type:"estado",req:1}]}
+  }
+};
 
-    <!-- EQUIPOS -->
-    <h2>Equipos</h2>
-    <div class="form-container">
-        <h3>Crear Equipo</h3>
-        <div class="form-grid">
-            <div class="form-group">
-                <label for="eq-nombre">Nombre del Equipo</label>
-                <input type="text" id="eq-nombre" placeholder="Ej: Barcelona">
-            </div>
-            <div class="form-group">
-                <label for="eq-formacion">Formación</label>
-                <input type="text" id="eq-formacion" placeholder="Ej: 4-3-3">
-            </div>
-            <div class="form-group">
-                <label for="eq-valoracion">Valoración (0-99)</label>
-                <input type="number" id="eq-valoracion" placeholder="Ej: 85">
-            </div>
-            <div class="form-group">
-                <label for="eq-posicion">Posición en Tabla</label>
-                <input type="number" id="eq-posicion" placeholder="Ej: 1">
-            </div>
-        </div>
-        <button class="btn-create" onclick="crearEquipo()">Crear Equipo</button>
-    </div>
+/* ---------- Estado y utilidades ---------- */
+const $ = s => document.querySelector(s);
+const state = {tab:"equipos", data:{equipos:[],jugadores:[],partidos:[]}, sort:{}, loaded:{}};
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const base = () => "/api";
+const equipoNombre = id => (state.data.equipos.find(e => e.id === id) || {}).nombre || (id ? `#${id}` : "—");
+const jugadorNombre = id => (state.data.jugadores.find(j => j.id === id) || {}).nombre || (id ? `#${id}` : "—");
 
-    <table id="tabla-equipos">
-        <thead>
-            <tr>
-                <th>ID</th><th>Nombre</th><th>Formación</th><th>Valoración</th><th>Posición</th><th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-
-  
-    <h2>Jugadores</h2>
-    <div class="form-container">
-        <h3>Crear Jugador</h3>
-        <div class="form-grid">
-            <div class="form-group">
-                <label for="jug-equipo">ID del Equipo</label>
-                <input type="number" id="jug-equipo" placeholder="Ej: 1">
-            </div>
-            <div class="form-group">
-                <label for="jug-nombre">Nombre del Jugador</label>
-                <input type="text" id="jug-nombre" placeholder="Ej: Lionel Messi">
-            </div>
-            <div class="form-group">
-                <label for="jug-posicion">Posición</label>
-                <input type="text" id="jug-posicion" placeholder="Ej: DEL, MED, DEF">
-            </div>
-            <div class="form-group">
-                <label for="jug-fecha-nac">Fecha de Nacimiento</label>
-                <input type="date" id="jug-fecha-nac">
-            </div>
-            <div class="form-group">
-                <label for="jug-media">Media (0-99)</label>
-                <input type="number" id="jug-media" placeholder="Ej: 90">
-            </div>
-
-         
-            <div class="form-group">
-                <label for="jug-altura">Altura (cm)</label>
-                <input type="number" id="jug-altura" placeholder="Ej: 170">
-            </div>
-            <div class="form-group">
-                <label for="jug-ritmo">Ritmo (0-99)</label>
-                <input type="number" id="jug-ritmo" placeholder="Ej: 85">
-            </div>
-            <div class="form-group">
-                <label for="jug-tiro">Tiro (0-99)</label>
-                <input type="number" id="jug-tiro" placeholder="Ej: 88">
-            </div>
-            <div class="form-group">
-                <label for="jug-pase">Pase (0-99)</label>
-                <input type="number" id="jug-pase" placeholder="Ej: 91">
-            </div>
-            <div class="form-group">
-                <label for="jug-regate">Regate (0-99)</label>
-                <input type="number" id="jug-regate" placeholder="Ej: 94">
-            </div>
-            <div class="form-group">
-                <label for="jug-defensa">Defensa (0-99)</label>
-                <input type="number" id="jug-defensa" placeholder="Ej: 35">
-            </div>
-            <div class="form-group">
-                <label for="jug-fisico">Físico (0-99)</label>
-                <input type="number" id="jug-fisico" placeholder="Ej: 65">
-            </div>
-        </div>
-        <button class="btn-create" onclick="crearJugador()">Crear Jugador</button>
-    </div>
-
-    <table id="tabla-jugadores">
-        <thead>
-            <tr>
-                <th>ID</th><th>Equipo ID</th><th>Nombre</th><th>Posición</th><th>Media</th><th>Goles</th><th>Asistencias</th><th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-
-    <!-- PARTIDOS -->
-    <h2>Partidos</h2>
-    <div class="form-container">
-        <h3>Crear Partido</h3>
-        <div class="form-grid">
-            <div class="form-group">
-                <label for="part-local">ID Equipo Local</label>
-                <input type="number" id="part-local" placeholder="Ej: 1">
-            </div>
-            <div class="form-group">
-                <label for="part-visita">ID Equipo Visitante</label>
-                <input type="number" id="part-visita" placeholder="Ej: 2">
-            </div>
-            <div class="form-group">
-                <label for="part-fecha">Fecha del Partido</label>
-                <input type="date" id="part-fecha">
-            </div>
-        </div>
-        <button class="btn-create" onclick="crearPartido()">Crear Partido</button>
-    </div>
-
-    <table id="tabla-partidos">
-        <thead>
-            <tr>
-                <th>ID</th><th>Local</th><th>Visitante</th><th>Goles L</th><th>Goles V</th><th>Estado</th><th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-
-    <script>
-        const API_BASE = '/api';
-
-        // --- SISTEMA DE NOTIFICACIONES ---
-        function mostrarNotificacion(mensaje, esError = false) {
-            const container = document.getElementById('alert-container');
-            const alert = document.createElement('div');
-            alert.className = `alert ${esError ? 'alert-error' : 'alert-success'}`;
-            
-            alert.innerHTML = `
-                <span>${mensaje}</span>
-                <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
-            `;
-
-            container.appendChild(alert);
-
-            setTimeout(() => {
-                if (alert.parentElement) {
-                    alert.style.opacity = '0';
-                    setTimeout(() => alert.remove(), 300);
-                }
-            }, 4000);
-        }
-
-        async function cargarDatos() {
-            await cargarEquipos();
-            await cargarJugadores();
-            await cargarPartidos();
-        }
-
-        // --- EQUIPOS ---
-        async function cargarEquipos() {
-            try {
-                const res = await fetch(`${API_BASE}/equipos`);
-                if (!res.ok) throw new Error("Error al obtener equipos");
-                const equipos = await res.json();
-                
-                const tbody = document.querySelector('#tabla-equipos tbody');
-                tbody.innerHTML = '';
-
-                (equipos || []).forEach(eq => {
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${eq.id}</td>
-                            <td>${eq.nombre}</td>
-                            <td>${eq.formacion_actual}</td>
-                            <td>${eq.valoracion}</td>
-                            <td>${eq.posicion_tabla}</td>
-                            <td>
-                                <button class="btn-update" onclick="actualizarEquipo(${eq.id})">Editar</button>
-                                <button class="btn-delete" onclick="eliminarEquipo(${eq.id})">Eliminar</button>
-                            </td>
-                        </tr>`;
-                });
-            } catch (err) {
-                console.error(err);
-            }
-        }
-
-        async function crearEquipo() {
-            const body = {
-                nombre: document.getElementById('eq-nombre').value,
-                formacion_actual: document.getElementById('eq-formacion').value,
-                valoracion: parseInt(document.getElementById('eq-valoracion').value) || 0,
-                posicion_tabla: parseInt(document.getElementById('eq-posicion').value) || 0
-            };
-
-            try {
-                const res = await fetch(`${API_BASE}/equipos`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
-
-                const data = await res.json();
-
-                if (!res.ok) {
-                    mostrarNotificacion(data.error || 'No se pudo crear el equipo', true);
-                    return;
-                }
-
-                mostrarNotificacion('¡Equipo creado con éxito!');
-                
-                document.getElementById('eq-nombre').value = '';
-                document.getElementById('eq-formacion').value = '';
-                document.getElementById('eq-valoracion').value = '';
-                document.getElementById('eq-posicion').value = '';
-
-                await cargarEquipos();
-            } catch (err) {
-                mostrarNotificacion('Error de conexión con el servidor', true);
-            }
-        }
-
-        async function actualizarEquipo(id) {
-            const nuevoNombre = prompt("Nuevo nombre del equipo:");
-            if (nuevoNombre === null) return;
-            const nuevaFormacion = prompt("Nueva formación (ej: 4-4-2):");
-            if (nuevaFormacion === null) return;
-            const nuevaPosTabla = parseInt(prompt("Nueva Posición en la Tabla:"));
-            if (isNaN(nuevaPosTabla)) {
-                mostrarNotificacion('La posición en la tabla debe ser un número', true);
-                return;
-            }
-
-            try {
-                const res = await fetch(`${API_BASE}/equipos/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        nombre: nuevoNombre,
-                        formacion_actual: nuevaFormacion,
-                        valoracion: 85,
-                        posicion_tabla: nuevaPosTabla
-                    })
-                });
-
-                const data = await res.json();
-
-                if (!res.ok) {
-                    mostrarNotificacion(data.error || 'Error al actualizar el equipo', true);
-                    return;
-                }
-
-                mostrarNotificacion('Equipo actualizado correctamente');
-                await cargarEquipos();
-            } catch (err) {
-                mostrarNotificacion('Error de conexión con el servidor', true);
-            }
-        }
-
-        async function eliminarEquipo(id) {
-            if (!confirm("¿Eliminar equipo?")) return;
-
-            try {
-                const res = await fetch(`${API_BASE}/equipos/${id}`, { method: 'DELETE' });
-                
-                if (!res.ok) {
-                    const data = await res.json();
-                    mostrarNotificacion(data.error || 'Error al eliminar el equipo', true);
-                    return;
-                }
-
-                mostrarNotificacion('Equipo eliminado correctamente');
-                await cargarEquipos();
-                await cargarPartidos();
-            } catch (err) {
-                mostrarNotificacion('Error de conexión con el servidor', true);
-            }
-        }
-
-        // --- JUGADORES ---
-        async function cargarJugadores() {
-            try {
-                const res = await fetch(`${API_BASE}/jugadores`);
-                if (!res.ok) throw new Error("Error al obtener jugadores");
-                const jugadores = await res.json();
-                
-                const tbody = document.querySelector('#tabla-jugadores tbody');
-                tbody.innerHTML = '';
-                (jugadores || []).forEach(j => {
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${j.id}</td>
-                            <td>${j.equipo_id}</td>
-                            <td>${j.nombre}</td>
-                            <td>${j.posicion}</td>
-                            <td>${j.media_general}</td>
-                            <td>${j.goles}</td>
-                            <td>${j.asistencias}</td>
-                            <td>
-                                <button class="btn-update" onclick="actualizarStats(${j.id}, ${j.goles}, ${j.asistencias})">Modificar Stats</button>
-                                <button class="btn-delete" onclick="eliminarJugador(${j.id})">Eliminar</button>
-                            </td>
-                        </tr>`;
-                });
-            } catch (err) {
-                console.error(err);
-            }
-        }
-
-        async function crearJugador() {
-            const body = {
-                equipo_id: parseInt(document.getElementById('jug-equipo').value) || 0,
-                nombre: document.getElementById('jug-nombre').value,
-                posicion: document.getElementById('jug-posicion').value,
-                fecha_nacimiento: document.getElementById('jug-fecha-nac').value,
-                media_general: parseInt(document.getElementById('jug-media').value) || 0,
-                
-                // Atributos obligatorios ingresados por el usuario
-                altura: document.getElementById('jug-altura').value || "1.70",
-                ritmo: parseInt(document.getElementById('jug-ritmo').value) || 0,
-                tiro: parseInt(document.getElementById('jug-tiro').value) || 0,
-                pase: parseInt(document.getElementById('jug-pase').value) || 0,
-                regate: parseInt(document.getElementById('jug-regate').value) || 0,
-                defensa: parseInt(document.getElementById('jug-defensa').value) || 0,
-                fisico: parseInt(document.getElementById('jug-fisico').value) || 0
-            };
-
-            try {
-                const res = await fetch(`${API_BASE}/jugadores`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
-
-                const data = await res.json();
-
-                if (!res.ok) {
-                    mostrarNotificacion(data.error || 'Error al crear el jugador', true);
-                    return;
-                }
-
-                mostrarNotificacion('¡Jugador creado con éxito!');
-
-                // Limpieza de campos del formulario
-                document.getElementById('jug-equipo').value = '';
-                document.getElementById('jug-nombre').value = '';
-                document.getElementById('jug-posicion').value = '';
-                document.getElementById('jug-fecha-nac').value = '';
-                document.getElementById('jug-media').value = '';
-                document.getElementById('jug-altura').value = '';
-                document.getElementById('jug-ritmo').value = '';
-                document.getElementById('jug-tiro').value = '';
-                document.getElementById('jug-pase').value = '';
-                document.getElementById('jug-regate').value = '';
-                document.getElementById('jug-defensa').value = '';
-                document.getElementById('jug-fisico').value = '';
-
-                await cargarJugadores();
-            } catch (err) {
-                mostrarNotificacion('Error de conexión con el servidor', true);
-            }
-        }
-
-        async function actualizarStats(id, golesActuales, asistenciasActuales) {
-            const nuevosGolesStr = prompt("Cantidad total de Goles:", golesActuales);
-            if (nuevosGolesStr === null) return;
-            const nuevasAsistenciasStr = prompt("Cantidad total de Asistencias:", asistenciasActuales);
-            if (nuevasAsistenciasStr === null) return;
-
-            const nuevosGoles = parseInt(nuevosGolesStr);
-            const nuevasAsistencias = parseInt(nuevasAsistenciasStr);
-            
-            if (isNaN(nuevosGoles) || isNaN(nuevasAsistencias)) {
-                mostrarNotificacion('Goles y asistencias deben ser números enteros', true);
-                return;
-            }
-
-            try {
-                const res = await fetch(`${API_BASE}/jugadores/${id}/stats`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        goles: nuevosGoles, 
-                        asistencias: nuevasAsistencias 
-                    })
-                });
-
-                const data = await res.json();
-
-                if (!res.ok) {
-                    mostrarNotificacion(data.error || 'Error al actualizar las estadísticas', true);
-                    return;
-                }
-
-                mostrarNotificacion('Estadísticas del jugador actualizadas');
-                await cargarJugadores();
-            } catch (err) {
-                mostrarNotificacion('Error de conexión con el servidor', true);
-            }
-        }
-
-        async function eliminarJugador(id) {
-            if (!confirm("¿Eliminar jugador?")) return;
-
-            try {
-                const res = await fetch(`${API_BASE}/jugadores/${id}`, { method: 'DELETE' });
-
-                if (!res.ok) {
-                    const data = await res.json();
-                    mostrarNotificacion(data.error || 'Error al eliminar el jugador', true);
-                    return;
-                }
-
-                mostrarNotificacion('Jugador eliminado con éxito');
-                await cargarJugadores();
-            } catch (err) {
-                mostrarNotificacion('Error de conexión con el servidor', true);
-            }
-        }
-
-
-// Función auxiliar para extraer el ID numérico de un campo sql.NullInt32 de Go
-function obtenerID(campoNullInt) {
-    if (campoNullInt === null || campoNullInt === undefined) return null;
-    // Si Go lo envió como objeto sql.NullInt32 { Int32: 5, Valid: true }
-    if (typeof campoNullInt === 'object') {
-        return campoNullInt.Valid ? campoNullInt.Int32 : null;
-    }
-    // Si en algún endpoint viene como número primitivo
-    return campoNullInt;
+function toast(msg, ok=true){
+  const t = $("#toast"); t.textContent = msg; t.className = (ok ? "ok" : "err") + " show"; t.style.display = "block";
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.style.display = "none", 3500);
 }
 
-async function cargarPartidos() {
-    try {
-        // 1. Obtener partidos y equipos en paralelo
-        const [resPartidos, resEquipos] = await Promise.all([
-            fetch(`${API_BASE}/partidos`),
-            fetch(`${API_BASE}/equipos`)
-        ]);
-
-        if (!resPartidos.ok) throw new Error("Error al obtener partidos");
-        
-        const partidos = await resPartidos.json();
-        let mapaEquipos = {};
-
-        if (resEquipos.ok) {
-            const equipos = await resEquipos.json();
-            equipos.forEach(e => {
-                mapaEquipos[e.id] = e.nombre;
-            });
-        }
-
-        const tbody = document.querySelector('#tabla-partidos tbody');
-        tbody.innerHTML = '';
-
-        (partidos || []).forEach(p => {
-            // Extraer el ID real teniendo en cuenta la estructura sql.NullInt32
-            const idLocal = obtenerID(p.equipo_local_id);
-            const idVisitante = obtenerID(p.equipo_visitante_id);
-
-            // Buscar en el mapa de equipos
-            const nombreLocal = idLocal ? (mapaEquipos[idLocal] || 'Equipo Eliminado') : 'Equipo Eliminado';
-            const nombreVisitante = idVisitante ? (mapaEquipos[idVisitante] || 'Equipo Eliminado') : 'Equipo Eliminado';
-
-            tbody.innerHTML += `
-                <tr>
-                    <td>${p.id}</td>
-                    <td>${nombreLocal}</td>
-                    <td>${nombreVisitante}</td>
-                    <td>${p.goles_local ?? 0}</td>
-                    <td>${p.goles_visitante ?? 0}</td>
-                    <td>${p.estado}</td>
-                    <td>
-                        <button class="btn-update" onclick="actualizarResultado(${p.id})">Resultado</button>
-                        <button class="btn-delete" onclick="eliminarPartido(${p.id})">Eliminar</button>
-                    </td>
-                </tr>`;
-        });
-    } catch (err) {
-        console.error("Error al cargar partidos:", err);
+/* Convierte sql.NullInt32 / NullString / NullTime… ({Int32|String|Time…, Valid}) en valor simple o null */
+function unwrap(v){
+  if (Array.isArray(v)) return v.map(unwrap);
+  if (v && typeof v === "object"){
+    if ("Valid" in v){
+      if (!v.Valid) return null;
+      const k = ["Int16","Int32","Int64","Float64","String","Time","Bool","Byte"].find(k => k in v);
+      return k ? v[k] : null;
     }
+    return Object.fromEntries(Object.entries(v).map(([k,x]) => [k, unwrap(x)]));
+  }
+  return v;
 }
 
+async function api(method, path, body){
+  const res = await fetch(base() + path, {
+    method, headers: body ? {"Content-Type":"application/json"} : {},
+    body: body ? JSON.stringify(body) : undefined
+  });
+  const text = await res.text();
+  let json = null; try { json = text ? JSON.parse(text) : null; } catch {}
+  if (!res.ok) throw new Error((json && (json.error || json.message)) || text || `Error ${res.status}`);
+  return unwrap(json);
+}
 
-        async function crearPartido() {
-            const body = {
-                equipo_local_id: parseInt(document.getElementById('part-local').value) || 0,
-                equipo_visitante_id: parseInt(document.getElementById('part-visita').value) || 0,
-                fecha: document.getElementById('part-fecha').value,
-                estado: "PENDIENTE"
-            };
+async function load(name){
+  try{
+    const json = await api("GET", ENT[name].path);
+    state.data[name] = Array.isArray(json) ? json : (json && (json.data || json.items)) || [];
+    state.loaded[name] = true;
+  }catch(e){
+    state.data[name] = [];
+    toast(`No se pudo cargar ${ENT[name].label.toLowerCase()}: ${e.message}`, false);
+  }
+}
+const loadAll = async () => { await Promise.all(Object.keys(ENT).map(load)); render(); };
 
-            try {
-                const res = await fetch(`${API_BASE}/partidos`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
+/* ---------- Render de la tabla ---------- */
+function cell(col, row){
+  const v = row[col.k];
+  switch(col.type){
+    case "img": return v ? `<img src="${esc(v)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">` : "—";
+    case "equipo": return esc(equipoNombre(v));
+    case "jugador": return v ? esc(jugadorNombre(v)) : "—";
+    case "fecha": return v ? esc(String(v).slice(0,10)) : "—";
+    case "estado": return v ? `<span class="badge ${esc(v)}">${esc(v)}</span>` : "—";
+    case "marcador": {
+      const hay = row.goles_local != null && row.goles_visitante != null;
+      return `<span class="score">${hay ? `${esc(row.goles_local)} – ${esc(row.goles_visitante)}` : "– –"}</span>`;
+    }
+    default: return v === null || v === undefined || v === "" ? "—" : esc(v);
+  }
+}
+const sortVal = (col,row) => col.type==="equipo" ? equipoNombre(row[col.k]) : col.type==="marcador" ? (row.goles_local ?? -1) : row[col.k];
 
-                const data = await res.json();
+function render(){
+  const ent = ENT[state.tab];
+  let rows = [...state.data[state.tab]];
+  const tf = $("#teamFilter").value;
+  if (state.tab === "jugadores" && tf) rows = rows.filter(r => String(r.equipo_id) === tf);
+  const s = state.sort[state.tab];
+  if (s){
+    const col = ent.columns.find(c => c.k === s.k);
+    rows.sort((a,b) => {
+      const x = sortVal(col,a), y = sortVal(col,b);
+      const r = typeof x === "number" && typeof y === "number" ? x - y : String(x ?? "").localeCompare(String(y ?? ""), "es", {numeric:true});
+      return s.dir * r;
+    });
+  }
+  $("thead").innerHTML = "<tr>" + ent.columns.map(c =>
+    `<th data-k="${c.k}" class="${c.num?"num":""}" title="Ordenar">${esc(c.t)}${s && s.k===c.k ? (s.dir>0?" ▲":" ▼") : ""}</th>`).join("") + "<th></th></tr>";
+  $("tbody").innerHTML = rows.length
+    ? rows.map(r => "<tr>" + ent.columns.map(c => `<td class="${c.num?"num":""}">${cell(c,r)}</td>`).join("") +
+        `<td class="acts"><button class="btn small" data-edit="${esc(r.id)}">${esc(ent.edit.title ? ent.edit.title.split(" ")[0] : "Editar")}</button>` +
+        (state.tab === "equipos" ? `<button class="btn small" data-info="${esc(r.id)}">Consultas</button>` : "") +
+        `<button class="btn small" data-del="${esc(r.id)}">Eliminar</button></td></tr>`).join("")
+    : `<tr><td class="empty" colspan="${ent.columns.length+1}">No hay ${ent.label.toLowerCase()} para mostrar. Cargá el primero con el botón de arriba.</td></tr>`;
+  $("#count").textContent = `${rows.length} de ${state.data[state.tab].length}`;
+  const sel = $("#teamFilter"), prev = sel.value;
+  sel.style.display = state.tab === "jugadores" ? "" : "none";
+  sel.innerHTML = '<option value="">Todos los equipos</option>' + state.data.equipos.map(e => `<option value="${esc(e.id)}">${esc(e.nombre)}</option>`).join("");
+  sel.value = prev;
+  $("#add").textContent = `Agregar ${ent.singular}`;
+  document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === state.tab));
+}
 
-                if (!res.ok) {
-                    mostrarNotificacion(data.error || 'Error al crear el partido', true);
-                    return;
-                }
+/* ---------- Formularios ---------- */
+function inputFor(f, value){
+  const v = value ?? "";
+  const common = `name="${f.k}" id="f_${f.k}" ${f.req ? "required" : ""}`;
+  if (f.type === "equipo")
+    return `<select ${common}><option value="">Elegí un equipo…</option>${state.data.equipos.map(e =>
+      `<option value="${esc(e.id)}" ${String(v)===String(e.id)?"selected":""}>${esc(e.nombre)}</option>`).join("")}</select>`;
+  if (f.type === "estado")
+    return `<select ${common}>${ESTADOS.map(s => `<option ${v===s?"selected":""}>${s}</option>`).join("")}</select>`;
+  const t = f.type || "text";
+  const extra = (f.min!==undefined?` min="${f.min}"`:"") + (f.max!==undefined?` max="${f.max}"`:"") + (f.ph?` placeholder="${esc(f.ph)}"`:"");
+  const val = t === "date" ? String(v).slice(0,10) : v;
+  return `<input type="${t}" ${common}${extra} value="${esc(val)}">`;
+}
 
-                mostrarNotificacion('¡Partido programado con éxito!');
+function openForm(mode, row){
+  const ent = ENT[state.tab];
+  const isEdit = mode === "edit";
+  const fields = isEdit ? ent.edit.fields : ent.create;
+  const title = isEdit ? (ent.edit.title || `Editar ${ent.singular}`) + ` #${row.id}` : `Nuevo ${ent.singular}`;
+  $("#form").innerHTML = `<h2>${esc(title)}</h2><div class="grid">` +
+    fields.map(f => `<div class="field"><label for="f_${f.k}">${esc(f.l)}${f.opt?" (opcional)":""}</label>${inputFor(f, isEdit ? row[f.k] : "")}</div>`).join("") +
+    `</div><div class="actions"><button type="button" class="btn" id="cancel">Cancelar</button><button class="btn primary" type="submit">${isEdit?"Guardar cambios":"Crear"}</button></div>`;
+  $("#cancel").onclick = () => $("#dlg").close();
+  $("#form").onsubmit = async ev => {
+    ev.preventDefault();
+    const body = {};
+    for (const f of fields){
+      const raw = $("#form").elements[f.k].value.trim();
+      if (f.type === "number" || f.type === "equipo") body[f.k] = raw === "" ? (f.opt ? null : 0) : Number(raw);
+      else body[f.k] = raw === "" && f.opt ? null : raw;
+    }
+    // Validaciones equivalentes a las del backend
+    if (state.tab === "partidos" && !isEdit && body.equipo_local_id === body.equipo_visitante_id)
+      return toast("El equipo local y el visitante no pueden ser el mismo.", false);
+    try{
+      if (isEdit) await api(ent.edit.method, ent.edit.path(row.id), body);
+      else await api("POST", ent.path, body);
+      $("#dlg").close();
+      toast(isEdit ? "Cambios guardados" : `${ent.singular[0].toUpperCase()+ent.singular.slice(1)} creado`);
+      await loadAll();
+    }catch(e){ toast(e.message, false); }
+  };
+  $("#dlg").showModal();
+}
 
-                document.getElementById('part-local').value = '';
-                document.getElementById('part-visita').value = '';
-                document.getElementById('part-fecha').value = '';
+/* ---------- Eventos ---------- */
+$("#tabs").innerHTML = Object.entries(ENT).map(([k,e]) => `<button role="tab" data-tab="${k}">${e.label}</button>`).join("");
+$("#tabs").onclick = e => { const b = e.target.closest("button"); if (b){ state.tab = b.dataset.tab; $("#teamFilter").value=""; render(); } };
+$("#add").onclick = () => openForm("create");
+$("thead").onclick = e => {
+  const th = e.target.closest("th[data-k]"); if (!th) return;
+  const cur = state.sort[state.tab];
+  state.sort[state.tab] = cur && cur.k === th.dataset.k ? {k:cur.k, dir:-cur.dir} : {k:th.dataset.k, dir:1};
+  render();
+};
+$("#teamFilter").onchange = render;
+$("tbody").onclick = async e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const ent = ENT[state.tab];
+  const find = id => state.data[state.tab].find(r => String(r.id) === id);
+  if (b.dataset.edit){ const row = find(b.dataset.edit); if (row) openForm("edit", row); }
+  else if (b.dataset.info){ const row = find(b.dataset.info); if (row) openInfo(row); }
+  else if (b.dataset.del){
+    if (!confirm(`¿Eliminar ${ent.singular} #${b.dataset.del}? Esta acción no se puede deshacer.`)) return;
+    try{ await api("DELETE", ent.del(b.dataset.del)); toast(`${ent.singular[0].toUpperCase()+ent.singular.slice(1)} eliminado`); await loadAll(); }
+    catch(err){ toast(err.message, false); }
+  }
+};
 
-                await cargarPartidos();
-            } catch (err) {
-                mostrarNotificacion('Error de conexión con el servidor', true);
-            }
-        }
+/* Consultas por equipo: mejor jugador y últimos partidos */
+const CONSULTAS = [
+  ["Mejor jugador", id => `/equipos/${id}/mejor-jugador`],
+  ["Último partido", id => `/equipos/${id}/partidos/ultimo`],
+  ["Último finalizado", id => `/equipos/${id}/partidos/ultimo-finalizado`],
+  ["Último con detalle", id => `/equipos/${id}/partidos/ultimo-detalle`]
+];
+function kv(o){
+  if (o === null || typeof o !== "object") return `<p>${esc(o)}</p>`;
+  return `<dl class="kv">` + Object.entries(o).map(([k,v]) => {
+    const val = v && typeof v === "object" ? `<code>${esc(JSON.stringify(v))}</code>` : esc(v ?? "—");
+    return `<dt>${esc(k.replace(/_/g," "))}</dt><dd>${val}</dd>`;
+  }).join("") + `</dl>`;
+}
+function openInfo(eq){
+  $("#form").innerHTML = `<h2>${esc(eq.nombre)}</h2><div class="toolbar">` +
+    CONSULTAS.map((c,i) => `<button type="button" class="btn small" data-q="${i}">${c[0]}</button>`).join("") +
+    `</div><div id="res" class="count">Elegí una consulta.</div><div class="actions"><button type="button" class="btn" id="cancel">Cerrar</button></div>`;
+  $("#cancel").onclick = () => $("#dlg").close();
+  $("#form").onsubmit = ev => ev.preventDefault();
+  $("#form").onclick = async ev => {
+    const q = ev.target.closest("[data-q]"); if (!q) return;
+    $("#res").textContent = "Cargando…";
+    try{ $("#res").innerHTML = kv(await api("GET", CONSULTAS[q.dataset.q][1](eq.id))); }
+    catch(err){ $("#res").textContent = err.message; }
+  };
+  $("#dlg").showModal();
+}
 
-        async function actualizarResultado(id) {
-            const gLocalStr = prompt("Goles local:");
-            if (gLocalStr === null) return;
-            const gVisitaStr = prompt("Goles visitante:");
-            if (gVisitaStr === null) return;
-
-            const gLocal = parseInt(gLocalStr);
-            const gVisita = parseInt(gVisitaStr);
-
-            if (isNaN(gLocal) || isNaN(gVisita)) {
-                mostrarNotificacion('Los goles deben ser números enteros', true);
-                return;
-            }
-
-            try {
-                const res = await fetch(`${API_BASE}/partidos/${id}/resultado`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        goles_local: gLocal, 
-                        goles_visitante: gVisita, 
-                        estado: 'FINALIZADO' 
-                    })
-                });
-
-                const data = await res.json();
-
-                if (!res.ok) {
-                    mostrarNotificacion(data.error || 'Error al actualizar el resultado', true);
-                    return;
-                }
-
-                mostrarNotificacion('Resultado del partido actualizado');
-                await cargarPartidos();
-            } catch (err) {
-                mostrarNotificacion('Error de conexión con el servidor', true);
-            }
-        }
-
-        async function eliminarPartido(id) {
-            if (!confirm("¿Eliminar partido?")) return;
-
-            try {
-                const res = await fetch(`${API_BASE}/partidos/${id}`, { method: 'DELETE' });
-
-                if (!res.ok) {
-                    const data = await res.json();
-                    mostrarNotificacion(data.error || 'Error al eliminar el partido', true);
-                    return;
-                }
-
-                mostrarNotificacion('Partido eliminado con éxito');
-                await cargarPartidos();
-            } catch (err) {
-                mostrarNotificacion('Error de conexión con el servidor', true);
-            }
-        }
-
-        window.onload = cargarDatos;
-    </script>
+render();
+loadAll();
+</script>
 </body>
 </html>

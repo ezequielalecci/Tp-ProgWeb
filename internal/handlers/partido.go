@@ -18,6 +18,17 @@ func NewAPIPartidosHandler(s *service.PartidoService) *APIPartidosHandler {
 	return &APIPartidosHandler{service: s}
 }
 
+func (h *APIPartidosHandler) RegisterPartidosRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("GET /api/partidos", h.ListPartidos)
+	mux.HandleFunc("GET /api/partidos/{id}", h.GetPartido)
+	mux.HandleFunc("POST /api/partidos", h.CrearPartido)
+	mux.HandleFunc("PUT /api/partidos/{id}/resultado", h.UpdateResultadoPartido)
+	mux.HandleFunc("DELETE /api/partidos/{id}", h.DeletePartido)
+	mux.HandleFunc("GET /api/equipos/{equipo_id}/partidos/ultimo", h.GetUltimoPartidoByEquipo)
+	mux.HandleFunc("GET /api/equipos/{equipo_id}/partidos/ultimo-finalizado", h.GetUltimoPartidoFinalizadoByEquipo)
+	mux.HandleFunc("GET /api/equipos/{equipo_id}/partidos/ultimo-detalle", h.GetUltimoPartidoConDetalleByEquipo)
+}
+
 // GET /api/partidos/{id}
 func (h *APIPartidosHandler) GetPartido(w http.ResponseWriter, r *http.Request) {
 	idStr := r.PathValue("id")

@@ -1,0 +1,34 @@
+# Control de versiones
+.git
+.gitignore
+
+# Documentación y herramientas de desarrollo (no hacen falta en la imagen)
+README.md
+Makefile
+scripts/
+
+# Archivos de Docker (no se copian dentro de la imagen)
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Binarios y temporales
+bin/
+tmp/
+*.exe
+*.test
+*.out
+coverage.out
+
+# Secretos y configuración local
+.env
+.env.*
+
+# Editores y sistema operativo
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# OJO: db/sqlc/ NO se ignora acá, el build necesita el código generado.
+# La carpeta static/ tampoco, porque la app sirve las páginas desde ./static

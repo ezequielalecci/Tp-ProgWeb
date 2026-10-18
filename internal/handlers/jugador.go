@@ -20,6 +20,17 @@ func NewAPIJugadoresHandler(s *service.JugadorService) *APIJugadoresHandler {
 	}
 }
 
+func (h *APIJugadoresHandler) RegisterJugadoresRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("GET /api/jugadores", h.GetJugadores)
+	mux.HandleFunc("GET /api/jugadores/{id}", h.GetJugador)
+	mux.HandleFunc("GET /api/jugadores/equipo", h.ListJugadoresByEquipo)
+	mux.HandleFunc("GET /api/equipos/{equipo_id}/mejor-jugador", h.GetMejorJugadorByEquipo)
+	mux.HandleFunc("POST /api/jugadores", h.CreateJugador)
+	mux.HandleFunc("PUT /api/jugadores/{id}/stats", h.UpdateJugadorStats)
+	mux.HandleFunc("DELETE /api/jugadores/{id}", h.DeleteJugador)
+
+}
+
 // GET /api/jugador/{id}
 func (h *APIJugadoresHandler) GetJugador(w http.ResponseWriter, r *http.Request) {
 	idStr := r.PathValue("id")
