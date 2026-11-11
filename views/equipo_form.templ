@@ -1,8 +1,5 @@
 package views
 
-// EquipoForm es el formulario de alta. No usa JavaScript: el navegador arma
-// el POST a /equipos con los name de cada input y recarga la página.
-// Si hubo un error de validación llega abierto y con los valores que se enviaron.
 templ EquipoForm(f FormState) {
 	<details class="alta" open?={ f.Error != "" }>
 		<summary class="btn primary">Agregar equipo</summary>

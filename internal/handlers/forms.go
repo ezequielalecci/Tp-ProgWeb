@@ -16,12 +16,6 @@ import (
 	"tpweb/views"
 )
 
-// Los tres handlers de alta siguen el patrón Post/Redirect/Get:
-//  1. parsean el formulario y lo vuelcan en el DTO de siempre,
-//  2. validan y guardan a través del servicio,
-//  3. si salió bien responden 303 hacia la página (el navegador hace un GET nuevo),
-//     y si no, vuelven a mostrar la página con el error y sin redirigir.
-
 // POST /equipos
 func (h *PageHandler) CrearEquipo(w http.ResponseWriter, r *http.Request) {
 	if !parsearFormulario(w, r) {
@@ -89,7 +83,6 @@ func (h *PageHandler) CrearJugador(w http.ResponseWriter, r *http.Request) {
 		FotoUrl:         formOpcional(r, "foto_url"),
 	}
 
-	// Los siete atributos numéricos se leen todos de la misma forma.
 	stats := []struct {
 		campo, etiqueta string
 		destino         *int16
@@ -150,7 +143,6 @@ func (h *PageHandler) CrearPartido(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Si la fecha no se puede parsear queda en cero y Validate() la rechaza.
 	fecha, _ := time.Parse("2006-01-02", formTexto(r, "fecha"))
 
 	req := dto.CreatePartidoRequest{
@@ -177,16 +169,10 @@ func (h *PageHandler) CrearPartido(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, views.URLTab(views.TabPartidos), http.StatusSeeOther)
 }
 
-// formularioInvalido vuelve a mostrar la página con status 400, el mensaje de
-// error y los valores enviados. No hay redirect: si el usuario recarga, el
-// navegador le avisa que va a reenviar el formulario, y está bien que así sea
-// porque todavía no se guardó nada.
 func (h *PageHandler) formularioInvalido(w http.ResponseWriter, r *http.Request, tab, msg string) {
 	h.renderIndex(w, r, http.StatusBadRequest, tab, views.FormState{Values: r.PostForm, Error: msg})
 }
 
-// parsearFormulario lee el cuerpo application/x-www-form-urlencoded y lo deja
-// disponible en r.PostForm. Devuelve false si ya respondió con un error.
 func parsearFormulario(w http.ResponseWriter, r *http.Request) bool {
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "No se pudo leer el formulario", http.StatusBadRequest)
@@ -199,8 +185,6 @@ func formTexto(r *http.Request, campo string) string {
 	return strings.TrimSpace(r.PostFormValue(campo))
 }
 
-// formOpcional devuelve nil cuando el campo viene vacío, que es como los DTO
-// representan un valor que en la base queda en NULL.
 func formOpcional(r *http.Request, campo string) *string {
 	v := formTexto(r, campo)
 	if v == "" {
@@ -209,7 +193,6 @@ func formOpcional(r *http.Request, campo string) *string {
 	return &v
 }
 
-// Todo lo que llega de un formulario es texto: hay que convertirlo a mano.
 func formInt16(r *http.Request, campo, etiqueta string) (int16, error) {
 	n, err := strconv.ParseInt(formTexto(r, campo), 10, 16)
 	if err != nil {
@@ -223,8 +206,6 @@ func formInt32(r *http.Request, campo string) (int32, error) {
 	return int32(n), err
 }
 
-// mayuscula pone en mayúscula la primera letra de los mensajes de Validate(),
-// que están escritos en minúscula como es costumbre para los errores en Go.
 func mayuscula(s string) string {
 	r, size := utf8.DecodeRuneInString(s)
 	if r == utf8.RuneError {

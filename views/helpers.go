@@ -10,7 +10,6 @@ import (
 	database "tpweb/db/sqlc"
 )
 
-// Pestañas de la página principal. El valor viaja en la URL: /?tab=jugadores
 const (
 	TabEquipos   = "equipos"
 	TabJugadores = "jugadores"
@@ -42,7 +41,6 @@ var estadosPartido = []opcion{
 	{"FINALIZADO", "Finalizado"},
 }
 
-// Atributos del jugador que van de 1 a 99. Valor es el name del input.
 var statsJugador = []opcion{
 	{"media_general", "Media general"},
 	{"ritmo", "Ritmo"},
@@ -53,8 +51,6 @@ var statsJugador = []opcion{
 	{"fisico", "Físico"},
 }
 
-// PageData es todo lo que necesita IndexPage para dibujarse.
-// El handler lo arma con los datos de la base y se lo pasa al componente.
 type PageData struct {
 	Tab       string
 	Equipos   []database.Equipo
@@ -63,9 +59,6 @@ type PageData struct {
 	Form      FormState
 }
 
-// FormState guarda lo que el usuario envió y el error de validación, para
-// volver a mostrar el formulario sin que pierda lo que ya había escrito.
-// En un GET normal está vacío.
 type FormState struct {
 	Values url.Values
 	Error  string

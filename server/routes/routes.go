@@ -11,16 +11,14 @@ import (
 func RegisterRoutes(queries *db.Queries) http.Handler {
 	mux := http.NewServeMux()
 
-	// Archivos estáticos: solo queda la hoja de estilos propia.
+	// solo queda la hoja de estilos.
 	fs := http.FileServer(http.Dir("./static"))
 	mux.Handle("GET /static/", http.StripPrefix("/static/", fs))
 
-	// Instanciación de Servicios
 	equipoService := service.NewEquipoService(queries)
 	jugadorService := service.NewJugadorService(queries)
 	partidosService := service.NewPartidoService(queries)
 
-	// Un único handler de páginas: renderiza las vistas y procesa los formularios.
 	pages := handlers.NewPageHandler(equipoService, jugadorService, partidosService)
 	pages.RegisterRoutes(mux)
 

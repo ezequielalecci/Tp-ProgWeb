@@ -17,8 +17,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// Estas pruebas usan la base real (la de docker compose) con los datos de
-// db/test-data.sql: equipos 1 y 2 ya cargados.
 func setupTest(t *testing.T) (http.Handler, *sql.DB) {
 	t.Helper()
 	dbURL := os.Getenv("TEST_DB_URL")
@@ -45,7 +43,6 @@ func get(t *testing.T, router http.Handler, path string) *httptest.ResponseRecor
 	return rr
 }
 
-// postForm envía los datos igual que un <form method="post"> del navegador.
 func postForm(t *testing.T, router http.Handler, path string, form url.Values) *httptest.ResponseRecorder {
 	t.Helper()
 	req := httptest.NewRequest(http.MethodPost, path, strings.NewReader(form.Encode()))
@@ -106,7 +103,6 @@ func TestCrearEquipoRedirigeYAparece(t *testing.T) {
 	})
 	esperarRedirect(t, rr, "/")
 
-	// El navegador seguiría el redirect con un GET: ahí tiene que estar el equipo nuevo.
 	if body := get(t, router, "/").Body.String(); !strings.Contains(body, nombre) {
 		t.Errorf("el equipo creado no aparece en la lista")
 	}

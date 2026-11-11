@@ -8,9 +8,6 @@ import (
 	"tpweb/views"
 )
 
-// PageHandler reemplaza a los handlers de la API JSON: en lugar de devolver
-// datos para que los dibuje JavaScript, devuelve el HTML ya armado con templ.
-// La lógica de negocio sigue estando en la capa de servicios.
 type PageHandler struct {
 	equipos   *service.EquipoService
 	jugadores *service.JugadorService
@@ -35,9 +32,6 @@ func (h *PageHandler) Index(w http.ResponseWriter, r *http.Request) {
 	h.renderIndex(w, r, http.StatusOK, tab, views.FormState{})
 }
 
-// renderIndex busca los datos, arma el componente de la página y lo escribe en
-// la respuesta. Lo usan el GET (formulario vacío) y los POST que fallan la
-// validación (formulario con el error y lo que el usuario había escrito).
 func (h *PageHandler) renderIndex(w http.ResponseWriter, r *http.Request, status int, tab string, form views.FormState) {
 	ctx := r.Context()
 

@@ -1,7 +1,5 @@
 package views
 
-// IndexPage es la página principal: usa el Layout y, según la pestaña activa,
-// muestra el formulario de alta y la lista de la entidad correspondiente.
 templ IndexPage(d PageData) {
 	@Layout("Resultados · " + tituloTab(d.Tab), d.Tab) {
 		switch d.Tab {

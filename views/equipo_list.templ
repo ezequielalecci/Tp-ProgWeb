@@ -2,8 +2,6 @@ package views
 
 import database "tpweb/db/sqlc"
 
-// EquipoList recibe el slice que devuelve sqlc (ListEquipos) y arma la tabla.
-// Los jugadores se usan solo para mostrar el nombre del mejor jugador.
 templ EquipoList(equipos []database.Equipo, jugadores []database.Jugadore) {
 	<section>
 		<h2>Equipos <span class="count">({ len(equipos) })</span></h2>

@@ -26,7 +26,7 @@ help:
 sqlc:
 	@echo ">> sqlc generate"
 	@if command -v sqlc >/dev/null 2>&1; then sqlc generate; \
-	else docker run --rm -v "$$(pwd):/src" -w /src sqlc/sqlc generate; fi
+	else docker run --rm -u "$$(id -u):$$(id -g)" -v "$$(pwd):/src" -w /src sqlc/sqlc generate; fi
 
 templ:
 	@echo ">> templ generate ($(TEMPL_VERSION))"
