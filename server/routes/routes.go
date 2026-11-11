@@ -35,8 +35,8 @@ func registerStaticRoutes(mux *http.ServeMux) {
 	fs := http.FileServer(http.Dir("./static"))
 	mux.Handle("GET /static/", http.StripPrefix("/static/", fs))
 
-	mux.HandleFunc("GET /resultados-api.html", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./static/resultados-api.html")
+	mux.HandleFunc("GET /index.html", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/index.html")
 	})
 
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
