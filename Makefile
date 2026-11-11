@@ -48,6 +48,10 @@ clean:
 	@docker compose down -v --remove-orphans
 
 up:
+	@if [ ! -f .env ]; then \
+		echo ">> Archivo .env no encontrado. Creando uno a partir de .env.example..."; \
+		cp .env.example .env; \
+	fi
 	@echo ">> Compilando (docker) y levantando contenedores"
 	@docker compose up -d --build
 

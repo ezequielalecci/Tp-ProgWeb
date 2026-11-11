@@ -14,12 +14,14 @@
 
    **Opción A: con Make (recomendada)**
 ```bash
-   make run     # genera el código (sqlc y templ), levanta Postgres y el servidor, y espera a que respondan
+   make run     # crea el .env automáticamente, genera el código, levanta la base y espera a que respondan
 ```
 
    **Opción B: con Docker Compose**
 ```bash
+   cp .env.example .env
    sqlc generate
+   templ generate
    docker compose up --build -d
 ```
    (el código de templ se genera dentro del build de Docker)
@@ -77,19 +79,10 @@ go test ./internal/handlers/
 + se eliminaron los handlers de la API JSON; `internal/handlers/pages.go` atiende `GET /` y `internal/handlers/forms.go` los `POST /equipos`, `POST /jugadores` y `POST /partidos`, que siguen el patrón Post/Redirect/Get
 + la capa de servicios y los DTO con sus validaciones se reutilizan sin cambios: solo cambió de dónde vienen los datos (formulario en lugar de JSON) y qué se responde (HTML en lugar de JSON)
 + el código generado por templ (`views/*_templ.go`) no se versiona, igual que el de sqlc: se genera con `make templ` y dentro del build de Docker
-+ por ahora solo se puede listar y dar de alta; editar, eliminar y las consultas por equipo que tenía el TP4 quedaron afuera de esta entrega
-
-## DETALLES DE LA TERCERA PARTE:
-+ se eliminaron los archivos generados por sqlc (por lo que se debe correr los comandos indicados en la parte superior para no tener errores)
-+ se ajusto la lógica de negocios en una capa de handlers (donde cada archivo maneja que rutas tiene disponible) y otra de service (con validaciones) 
-+ se agregaron test para probar los endpoints de forma automática y rápida
-+ se agrego .gitignore y .dockerignore
++ por ahora solo se puede listar y dar de alta. Editar, eliminar y las consultas por equipo que tenía el TP4 quedaron afuera de esta entrega y se implementaran mas tarde si se nos solicita eso
 
 esta seria la estructura de la base de datos
 ![Diagrama base de datos](assets/DiagramaDB.jpeg)
-
-PARA FUTURAS EDICIONES:
-+ Si se nos solicita agregaremos .env 
 
 DETALLES DE NUESTRA PÁGINA:
 Nuestra página consta de un tablero que enseña equipos cargados por el administrador, donde los usuarios que la utilicen pueden ver información acerca de los mismos. Por ejemplo, plantel, valoración media del equipo, mejores jugadores, estadísticas individuales de cada jugador, últimos resultados de ese equipo, posición en la tabla, etc.
