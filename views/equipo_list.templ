@@ -1,0 +1,47 @@
+package views
+
+import database "tpweb/db/sqlc"
+
+// EquipoList recibe el slice que devuelve sqlc (ListEquipos) y arma la tabla.
+// Los jugadores se usan solo para mostrar el nombre del mejor jugador.
+templ EquipoList(equipos []database.Equipo, jugadores []database.Jugadore) {
+	<section>
+		<h2>Equipos <span class="count">({ len(equipos) })</span></h2>
+		if len(equipos) == 0 {
+			<p class="empty">Todavía no hay equipos cargados. Agregá el primero con el formulario de arriba.</p>
+		} else {
+			<div class="tablewrap">
+				<table>
+					<thead>
+						<tr>
+							<th scope="col">Escudo</th>
+							<th scope="col">Nombre</th>
+							<th scope="col">Formación</th>
+							<th scope="col" class="num">Valoración</th>
+							<th scope="col" class="num">Posición</th>
+							<th scope="col">Mejor jugador</th>
+						</tr>
+					</thead>
+					<tbody>
+						for _, e := range equipos {
+							<tr>
+								<td>
+									if e.EscudoUrl.Valid {
+										<img src={ e.EscudoUrl.String } alt="" loading="lazy"/>
+									} else {
+										<span>—</span>
+									}
+								</td>
+								<td>{ e.Nombre }</td>
+								<td>{ e.FormacionActual }</td>
+								<td class="num">{ e.Valoracion }</td>
+								<td class="num">{ e.PosicionTabla }</td>
+								<td>{ nombreJugador(jugadores, e.MejorJugador) }</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		}
+	</section>
+}

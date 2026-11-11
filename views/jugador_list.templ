@@ -1,0 +1,65 @@
+package views
+
+import database "tpweb/db/sqlc"
+
+// JugadorList recibe el slice de jugadores de sqlc. Los equipos se usan para
+// mostrar el nombre del equipo en lugar de su id.
+templ JugadorList(jugadores []database.Jugadore, equipos []database.Equipo) {
+	<section>
+		<h2>Jugadores <span class="count">({ len(jugadores) })</span></h2>
+		if len(jugadores) == 0 {
+			<p class="empty">Todavía no hay jugadores cargados. Agregá el primero con el formulario de arriba.</p>
+		} else {
+			<div class="tablewrap">
+				<table>
+					<thead>
+						<tr>
+							<th scope="col">Foto</th>
+							<th scope="col">Nombre</th>
+							<th scope="col">Equipo</th>
+							<th scope="col">Pos.</th>
+							<th scope="col">Nacimiento</th>
+							<th scope="col" class="num">Altura</th>
+							<th scope="col" class="num">Media</th>
+							<th scope="col" class="num">RIT</th>
+							<th scope="col" class="num">TIR</th>
+							<th scope="col" class="num">PAS</th>
+							<th scope="col" class="num">REG</th>
+							<th scope="col" class="num">DEF</th>
+							<th scope="col" class="num">FIS</th>
+							<th scope="col" class="num">Goles</th>
+							<th scope="col" class="num">Asist.</th>
+						</tr>
+					</thead>
+					<tbody>
+						for _, j := range jugadores {
+							<tr>
+								<td>
+									if j.FotoUrl.Valid {
+										<img src={ j.FotoUrl.String } alt="" loading="lazy"/>
+									} else {
+										<span>—</span>
+									}
+								</td>
+								<td>{ j.Nombre }</td>
+								<td>{ nombreEquipo(equipos, j.EquipoID) }</td>
+								<td>{ j.Posicion }</td>
+								<td>{ fecha(j.FechaNacimiento) }</td>
+								<td class="num">{ j.Altura }</td>
+								<td class="num">{ j.MediaGeneral }</td>
+								<td class="num">{ j.Ritmo }</td>
+								<td class="num">{ j.Tiro }</td>
+								<td class="num">{ j.Pase }</td>
+								<td class="num">{ j.Regate }</td>
+								<td class="num">{ j.Defensa }</td>
+								<td class="num">{ j.Fisico }</td>
+								<td class="num">{ j.Goles }</td>
+								<td class="num">{ j.Asistencias }</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		}
+	</section>
+}

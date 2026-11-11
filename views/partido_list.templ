@@ -1,0 +1,39 @@
+package views
+
+import database "tpweb/db/sqlc"
+
+// PartidoList recibe el slice de partidos de sqlc. Los equipos se usan para
+// mostrar los nombres del local y del visitante.
+templ PartidoList(partidos []database.Partido, equipos []database.Equipo) {
+	<section>
+		<h2>Partidos <span class="count">({ len(partidos) })</span></h2>
+		if len(partidos) == 0 {
+			<p class="empty">Todavía no hay partidos cargados. Agregá el primero con el formulario de arriba.</p>
+		} else {
+			<div class="tablewrap">
+				<table>
+					<thead>
+						<tr>
+							<th scope="col">Fecha</th>
+							<th scope="col">Local</th>
+							<th scope="col">Resultado</th>
+							<th scope="col">Visitante</th>
+							<th scope="col">Estado</th>
+						</tr>
+					</thead>
+					<tbody>
+						for _, p := range partidos {
+							<tr>
+								<td>{ fecha(p.Fecha) }</td>
+								<td>{ nombreEquipoPartido(equipos, p.EquipoLocalID) }</td>
+								<td class="score">{ p.GolesLocal } – { p.GolesVisitante }</td>
+								<td>{ nombreEquipoPartido(equipos, p.EquipoVisitanteID) }</td>
+								<td><span class={ "badge", claseEstado(p.Estado) }>{ p.Estado }</span></td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		}
+	</section>
+}

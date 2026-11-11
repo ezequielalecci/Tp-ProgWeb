@@ -1,0 +1,40 @@
+package views
+
+// EquipoForm es el formulario de alta. No usa JavaScript: el navegador arma
+// el POST a /equipos con los name de cada input y recarga la página.
+// Si hubo un error de validación llega abierto y con los valores que se enviaron.
+templ EquipoForm(f FormState) {
+	<details class="alta" open?={ f.Error != "" }>
+		<summary class="btn primary">Agregar equipo</summary>
+		<form method="post" action="/equipos">
+			@formError(f)
+			<div class="grid">
+				<label class="field">
+					Nombre
+					<input type="text" name="nombre" value={ f.Get("nombre") } maxlength="100" required/>
+				</label>
+				<label class="field">
+					Formación actual
+					<input type="text" name="formacion_actual" value={ f.GetOr("formacion_actual", "4-3-3") } maxlength="10" required/>
+				</label>
+			</div>
+			<div class="grid">
+				<label class="field">
+					Valoración (1 a 99)
+					<input type="number" name="valoracion" value={ f.Get("valoracion") } min="1" max="99" required/>
+				</label>
+				<label class="field">
+					Posición en la tabla
+					<input type="number" name="posicion_tabla" value={ f.Get("posicion_tabla") } min="1" required/>
+				</label>
+			</div>
+			<label class="field">
+				URL del escudo (opcional)
+				<input type="url" name="escudo_url" value={ f.Get("escudo_url") } placeholder="https://..."/>
+			</label>
+			<div class="actions">
+				<button class="btn primary" type="submit">Crear equipo</button>
+			</div>
+		</form>
+	</details>
+}

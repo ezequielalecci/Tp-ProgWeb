@@ -11,35 +11,18 @@ import (
 func RegisterRoutes(queries *db.Queries) http.Handler {
 	mux := http.NewServeMux()
 
-	registerStaticRoutes(mux)
+	// Archivos estáticos: solo queda la hoja de estilos propia.
+	fs := http.FileServer(http.Dir("./static"))
+	mux.Handle("GET /static/", http.StripPrefix("/static/", fs))
 
 	// Instanciación de Servicios
 	equipoService := service.NewEquipoService(queries)
 	jugadorService := service.NewJugadorService(queries)
 	partidosService := service.NewPartidoService(queries)
 
-	// Instanciación de Handlers
-	equipoHandler := handlers.NewAPIEquiposHandler(equipoService)
-	jugadorHandler := handlers.NewAPIJugadoresHandler(jugadorService)
-	partidoHandler := handlers.NewAPIPartidosHandler(partidosService)
-
-	// Delegación del registro de rutas a cada handler
-	equipoHandler.RegisterEquiposRoutes(mux)
-	jugadorHandler.RegisterJugadoresRoutes(mux)
-	partidoHandler.RegisterPartidosRoutes(mux)
+	// Un único handler de páginas: renderiza las vistas y procesa los formularios.
+	pages := handlers.NewPageHandler(equipoService, jugadorService, partidosService)
+	pages.RegisterRoutes(mux)
 
 	return mux
-}
-
-func registerStaticRoutes(mux *http.ServeMux) {
-	fs := http.FileServer(http.Dir("./static"))
-	mux.Handle("GET /static/", http.StripPrefix("/static/", fs))
-
-	mux.HandleFunc("GET /index.html", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./static/index.html")
-	})
-
-	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./static/index.html")
-	})
 }

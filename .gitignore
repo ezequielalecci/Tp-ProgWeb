@@ -1,6 +1,9 @@
 # Código generado por sqlc (se regenera con: make sqlc)
 db/sqlc/
 
+# Código generado por templ (se regenera con: make templ)
+*_templ.go
+
 # Binarios y compilados
 /bin/
 /tmp/

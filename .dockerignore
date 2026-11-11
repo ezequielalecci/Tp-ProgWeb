@@ -31,4 +31,5 @@ coverage.out
 Thumbs.db
 
 # OJO: db/sqlc/ NO se ignora acá, el build necesita el código generado.
-# La carpeta static/ tampoco, porque la app sirve las páginas desde ./static
+# views/ tampoco: los .templ se compilan a Go dentro del build.
+# La carpeta static/ tampoco, porque la app sirve la hoja de estilos desde ./static

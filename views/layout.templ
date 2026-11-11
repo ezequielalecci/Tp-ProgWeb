@@ -1,0 +1,43 @@
+package views
+
+// Layout es la estructura base de todas las páginas: <html>, <head> y <body>.
+// El contenido propio de cada página entra por { children... }.
+// Recibe la pestaña activa porque las pestañas van dentro del encabezado.
+templ Layout(titulo string, activa string) {
+	<!DOCTYPE html>
+	<html lang="es">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<title>{ titulo }</title>
+			<link rel="stylesheet" href="/static/styles.css"/>
+		</head>
+		<body>
+			<header>
+				<div class="wrap">
+					<h1>Resultados de la liga</h1>
+					<p>Consultá y cargá equipos, jugadores y partidos</p>
+					@tabs(activa)
+				</div>
+			</header>
+			<main class="wrap">
+				{ children... }
+			</main>
+		</body>
+	</html>
+}
+
+// tabs reemplaza a las pestañas que antes manejaba app.js: ahora son links
+// comunes, y cada click es un GET nuevo que el servidor responde ya renderizado.
+templ tabs(activa string) {
+	<nav aria-label="Secciones">
+		for _, p := range pestanias {
+			<a
+				href={ URLTab(p.Valor) }
+				if p.Valor == activa {
+					aria-current="page"
+				}
+			>{ p.Texto }</a>
+		}
+	</nav>
+}

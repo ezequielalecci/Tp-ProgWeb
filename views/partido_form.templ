@@ -1,0 +1,54 @@
+package views
+
+import database "tpweb/db/sqlc"
+
+// PartidoForm necesita al menos dos equipos: local y visitante no pueden ser el mismo.
+templ PartidoForm(f FormState, equipos []database.Equipo) {
+	<details class="alta" open?={ f.Error != "" }>
+		<summary class="btn primary">Agregar partido</summary>
+		if len(equipos) < 2 {
+			<p class="aviso">Hacen falta al menos dos equipos cargados para armar un partido.</p>
+		} else {
+			<form method="post" action="/partidos">
+				@formError(f)
+				<div class="grid">
+					<label class="field">
+						Equipo local
+						<select name="equipo_local_id" required>
+							<option value="">Elegí un equipo…</option>
+							for _, e := range equipos {
+								<option value={ idStr(e.ID) } selected?={ f.Get("equipo_local_id") == idStr(e.ID) }>{ e.Nombre }</option>
+							}
+						</select>
+					</label>
+					<label class="field">
+						Equipo visitante
+						<select name="equipo_visitante_id" required>
+							<option value="">Elegí un equipo…</option>
+							for _, e := range equipos {
+								<option value={ idStr(e.ID) } selected?={ f.Get("equipo_visitante_id") == idStr(e.ID) }>{ e.Nombre }</option>
+							}
+						</select>
+					</label>
+				</div>
+				<div class="grid">
+					<label class="field">
+						Fecha
+						<input type="date" name="fecha" value={ f.Get("fecha") } required/>
+					</label>
+					<label class="field">
+						Estado
+						<select name="estado" required>
+							for _, s := range estadosPartido {
+								<option value={ s.Valor } selected?={ f.Get("estado") == s.Valor }>{ s.Texto }</option>
+							}
+						</select>
+					</label>
+				</div>
+				<div class="actions">
+					<button class="btn primary" type="submit">Crear partido</button>
+				</div>
+			</form>
+		}
+	</details>
+}

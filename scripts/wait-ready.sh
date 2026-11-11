@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Espera a que la base este healthy y a que la API responda.
+# Espera a que la base este healthy y a que la aplicacion responda.
 DB_CONTAINER=${DB_CONTAINER:-gestion_futbol_db}
 BASE_URL=${BASE_URL:-http://localhost:8080}
 TIMEOUT=${TIMEOUT:-90}
@@ -18,7 +18,7 @@ done
 
 echo ">> Esperando a la aplicacion ($BASE_URL)..."
 for ((i = 0; i < TIMEOUT; i++)); do
-  code=$(curl -s -o /dev/null -w '%{http_code}' "$BASE_URL/api/equipos" 2>/dev/null)
+  code=$(curl -s -o /dev/null -w '%{http_code}' "$BASE_URL/" 2>/dev/null)
   [[ "$code" == "200" ]] && { echo "   aplicacion lista"; exit 0; }
   sleep 1
 done

@@ -1,0 +1,69 @@
+package views
+
+import database "tpweb/db/sqlc"
+
+// JugadorForm recibe los equipos para armar el <select>: un jugador siempre
+// pertenece a un equipo, así que sin equipos no se puede cargar ninguno.
+templ JugadorForm(f FormState, equipos []database.Equipo) {
+	<details class="alta" open?={ f.Error != "" }>
+		<summary class="btn primary">Agregar jugador</summary>
+		if len(equipos) == 0 {
+			<p class="aviso">Primero cargá un equipo en la pestaña Equipos.</p>
+		} else {
+			<form method="post" action="/jugadores">
+				@formError(f)
+				<div class="grid">
+					<label class="field">
+						Nombre
+						<input type="text" name="nombre" value={ f.Get("nombre") } maxlength="255" required/>
+					</label>
+					<label class="field">
+						Equipo
+						<select name="equipo_id" required>
+							<option value="">Elegí un equipo…</option>
+							for _, e := range equipos {
+								<option value={ idStr(e.ID) } selected?={ f.Get("equipo_id") == idStr(e.ID) }>{ e.Nombre }</option>
+							}
+						</select>
+					</label>
+					<label class="field">
+						Posición
+						<select name="posicion" required>
+							for _, p := range posiciones {
+								<option value={ p.Valor } selected?={ f.Get("posicion") == p.Valor }>{ p.Texto }</option>
+							}
+						</select>
+					</label>
+				</div>
+				<div class="grid">
+					<label class="field">
+						Fecha de nacimiento
+						<input type="date" name="fecha_nacimiento" value={ f.Get("fecha_nacimiento") } required/>
+					</label>
+					<label class="field">
+						Altura (en metros)
+						<input type="number" name="altura" value={ f.Get("altura") } min="1" max="2.5" step="0.01" placeholder="1.78" required/>
+					</label>
+					<label class="field">
+						URL de la foto (opcional)
+						<input type="url" name="foto_url" value={ f.Get("foto_url") } placeholder="https://..."/>
+					</label>
+				</div>
+				<fieldset>
+					<legend>Atributos (1 a 99)</legend>
+					<div class="grid stats">
+						for _, s := range statsJugador {
+							<label class="field">
+								{ s.Texto }
+								<input type="number" name={ s.Valor } value={ f.Get(s.Valor) } min="1" max="99" required/>
+							</label>
+						}
+					</div>
+				</fieldset>
+				<div class="actions">
+					<button class="btn primary" type="submit">Crear jugador</button>
+				</div>
+			</form>
+		}
+	</details>
+}

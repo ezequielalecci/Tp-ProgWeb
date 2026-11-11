@@ -1,0 +1,26 @@
+package views
+
+// IndexPage es la página principal: usa el Layout y, según la pestaña activa,
+// muestra el formulario de alta y la lista de la entidad correspondiente.
+templ IndexPage(d PageData) {
+	@Layout("Resultados · " + tituloTab(d.Tab), d.Tab) {
+		switch d.Tab {
+			case TabJugadores:
+				@JugadorForm(d.Form, d.Equipos)
+				@JugadorList(d.Jugadores, d.Equipos)
+			case TabPartidos:
+				@PartidoForm(d.Form, d.Equipos)
+				@PartidoList(d.Partidos, d.Equipos)
+			default:
+				@EquipoForm(d.Form)
+				@EquipoList(d.Equipos, d.Jugadores)
+		}
+	}
+}
+
+// formError muestra el mensaje de validación cuando el POST fue rechazado.
+templ formError(f FormState) {
+	if f.Error != "" {
+		<p class="form-error" role="alert">{ f.Error }</p>
+	}
+}
