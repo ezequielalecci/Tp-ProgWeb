@@ -9,7 +9,13 @@ templ PartidoForm(f FormState, equipos []database.Equipo) {
 		if len(equipos) < 2 {
 			<p class="aviso">Hacen falta al menos dos equipos cargados para armar un partido.</p>
 		} else {
-			<form method="post" action="/partidos">
+			<form 
+				method="post"
+			 	action="/partidos"
+				hx-post="/partidos"
+				hx-target="#partidos-lista"
+				hx-swap="outerHTML"
+			>
 				@formError(f)
 				<div class="grid">
 					<label class="field">

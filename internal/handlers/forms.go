@@ -258,3 +258,45 @@ func formInt32Path(r *http.Request, campo string) (int32, error) {
 	}
 	return int32(n), nil
 }
+
+// DELETE /jugadores/{id}
+func (h *PageHandler) EliminarJugador(w http.ResponseWriter, r *http.Request) {
+	id, err := formInt32Path(r, "id")
+	if err != nil || id <= 0 {
+		http.Error(w, "ID de jugador inválido", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.jugadores.DeleteJugador(r.Context(), id); err != nil {
+		if errors.Is(err, service.ErrJugadorNotFound) {
+			http.Error(w, "Jugador no encontrado", http.StatusNotFound)
+			return
+		}
+		log.Printf("error al eliminar jugador %d: %v", id, err)
+		http.Error(w, "No se pudo eliminar el jugador", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// DELETE /partidos/{id}
+func (h *PageHandler) EliminarPartido(w http.ResponseWriter, r *http.Request) {
+	id, err := formInt32Path(r, "id")
+	if err != nil || id <= 0 {
+		http.Error(w, "ID de partido inválido", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.partidos.DeletePartido(r.Context(), id); err != nil {
+		if errors.Is(err, service.ErrPartidoNotFound) {
+			http.Error(w, "Partido no encontrado", http.StatusNotFound)
+			return
+		}
+		log.Printf("error al eliminar partido %d: %v", id, err)
+		http.Error(w, "No se pudo eliminar el partido", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}

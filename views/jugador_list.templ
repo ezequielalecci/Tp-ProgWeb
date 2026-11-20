@@ -1,11 +1,14 @@
 package views
 
-import database "tpweb/db/sqlc"
+import (
+	database "tpweb/db/sqlc"
+	"fmt"
+)
 
 // JugadorList recibe el slice de jugadores de sqlc. Los equipos se usan para
 // mostrar el nombre del equipo en lugar de su id.
 templ JugadorList(jugadores []database.Jugadore, equipos []database.Equipo) {
-	<section>
+	<section id="jugadores-lista">
 		<h2>Jugadores <span class="count">({ len(jugadores) })</span></h2>
 		if len(jugadores) == 0 {
 			<p class="empty">Todavía no hay jugadores cargados. Agregá el primero con el formulario de arriba.</p>
@@ -29,6 +32,7 @@ templ JugadorList(jugadores []database.Jugadore, equipos []database.Equipo) {
 							<th scope="col" class="num">FIS</th>
 							<th scope="col" class="num">Goles</th>
 							<th scope="col" class="num">Asist.</th>
+							<th scope="col" class="actions-col">Acciones</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -55,6 +59,18 @@ templ JugadorList(jugadores []database.Jugadore, equipos []database.Equipo) {
 								<td class="num">{ j.Fisico }</td>
 								<td class="num">{ j.Goles }</td>
 								<td class="num">{ j.Asistencias }</td>
+								<td>
+									<button
+											type="button"
+											class="btn danger"
+											hx-delete={ fmt.Sprintf("/jugadores/%d", j.ID) }
+											hx-target="closest tr"
+											hx-swap="outerHTML"
+											hx-confirm="¿Seguro que querés borrar este jugador?"
+									>
+											Borrar
+									</button>
+								</td>
 							</tr>
 						}
 					</tbody>

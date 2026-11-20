@@ -1,11 +1,14 @@
 package views
 
-import database "tpweb/db/sqlc"
+import (
+	database "tpweb/db/sqlc"
+	"fmt"
+)
 
 // PartidoList recibe el slice de partidos de sqlc. Los equipos se usan para
 // mostrar los nombres del local y del visitante.
 templ PartidoList(partidos []database.Partido, equipos []database.Equipo) {
-	<section>
+	<section id="partidos-lista">
 		<h2>Partidos <span class="count">({ len(partidos) })</span></h2>
 		if len(partidos) == 0 {
 			<p class="empty">Todavía no hay partidos cargados. Agregá el primero con el formulario de arriba.</p>
@@ -19,6 +22,7 @@ templ PartidoList(partidos []database.Partido, equipos []database.Equipo) {
 							<th scope="col">Resultado</th>
 							<th scope="col">Visitante</th>
 							<th scope="col">Estado</th>
+							<th scope="col" class="actions-col">Acciones</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -29,6 +33,18 @@ templ PartidoList(partidos []database.Partido, equipos []database.Equipo) {
 								<td class="score">{ p.GolesLocal } – { p.GolesVisitante }</td>
 								<td>{ nombreEquipoPartido(equipos, p.EquipoVisitanteID) }</td>
 								<td><span class={ "badge", claseEstado(p.Estado) }>{ p.Estado }</span></td>
+								<td>
+									<button
+											type="button"
+											class="btn danger"
+											hx-delete={ fmt.Sprintf("/partidos/%d", p.ID) }
+											hx-target="closest tr"
+											hx-swap="outerHTML"
+											hx-confirm="¿Seguro que querés borrar este partido?"
+									>
+											Borrar
+									</button>
+								</td>
 							</tr>
 						}
 					</tbody>

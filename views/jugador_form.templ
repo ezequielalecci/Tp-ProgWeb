@@ -10,7 +10,13 @@ templ JugadorForm(f FormState, equipos []database.Equipo) {
 		if len(equipos) == 0 {
 			<p class="aviso">Primero cargá un equipo en la pestaña Equipos.</p>
 		} else {
-			<form method="post" action="/jugadores">
+			<form 
+				method="post"
+				action="/jugadores"
+				hx-post="/jugadores"
+				hx-target="#jugadores-lista"
+				hx-swap="outerHTML"
+				>
 				@formError(f)
 				<div class="grid">
 					<label class="field">
