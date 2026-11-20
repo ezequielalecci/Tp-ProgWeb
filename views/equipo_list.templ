@@ -1,8 +1,8 @@
 package views
 
 import (
-	database "tpweb/db/sqlc"
 	"fmt"
+	database "tpweb/db/sqlc"
 )
 
 templ EquipoList(equipos []database.Equipo, jugadores []database.Jugadore) {
@@ -26,7 +26,7 @@ templ EquipoList(equipos []database.Equipo, jugadores []database.Jugadore) {
 					</thead>
 					<tbody>
 						for _, e := range equipos {
-							<tr>
+							<tr id={ fmt.Sprintf("equipo-%d", e.ID) }>
 								<td>
 									if e.EscudoUrl.Valid {
 										<img src={ e.EscudoUrl.String } alt="" loading="lazy"/>
@@ -42,16 +42,24 @@ templ EquipoList(equipos []database.Equipo, jugadores []database.Jugadore) {
 								<td>
 									<button
 										type="button"
+										class="btn"
+										hx-get={ fmt.Sprintf("/equipos/%d/edit", e.ID) }
+										hx-target={ fmt.Sprintf("#equipo-%d", e.ID) }
+										hx-swap="outerHTML"
+									>
+										Editar
+									</button>
+									<button
+										type="button"
 										class="btn danger"
 										hx-delete={ fmt.Sprintf("/equipos/%d", e.ID) }
-										hx-target="closest tr"
+										hx-target="#equipos-lista"
 										hx-swap="outerHTML"
 										hx-confirm="¿Seguro que querés borrar este equipo?"
 									>
 										Borrar
 									</button>
 								</td>
-
 							</tr>
 						}
 					</tbody>
@@ -59,4 +67,93 @@ templ EquipoList(equipos []database.Equipo, jugadores []database.Jugadore) {
 			</div>
 		}
 	</section>
+}
+
+templ EquipoEditRow(e database.Equipo, jugadores []database.Jugadore, f FormState) {
+	<tr id={ fmt.Sprintf("equipo-%d", e.ID) }>
+		<td>
+			<input
+				type="url"
+				name="escudo_url"
+				form={ fmt.Sprintf("edit-form-%d", e.ID) }
+				value={ f.GetOr("escudo_url", e.EscudoUrl.String) }
+				placeholder="https://..."
+			/>
+		</td>
+		<td>
+			<input
+				type="text"
+				name="nombre"
+				form={ fmt.Sprintf("edit-form-%d", e.ID) }
+				value={ f.GetOr("nombre", e.Nombre) }
+				maxlength="100"
+				required
+			/>
+		</td>
+		<td>
+			<input
+				type="text"
+				name="formacion_actual"
+				form={ fmt.Sprintf("edit-form-%d", e.ID) }
+				value={ f.GetOr("formacion_actual", e.FormacionActual) }
+				maxlength="10"
+				required
+			/>
+		</td>
+		<td>
+			<input
+				type="number"
+				name="valoracion"
+				form={ fmt.Sprintf("edit-form-%d", e.ID) }
+				value={ f.GetOr("valoracion", fmt.Sprint(e.Valoracion)) }
+				min="1"
+				max="99"
+				required
+			/>
+		</td>
+		<td>
+			<input
+				type="number"
+				name="posicion_tabla"
+				form={ fmt.Sprintf("edit-form-%d", e.ID) }
+				value={ f.GetOr("posicion_tabla", fmt.Sprint(e.PosicionTabla)) }
+				min="1"
+				required
+			/>
+		</td>
+		<td>
+			<select name="mejor_jugador" form={ fmt.Sprintf("edit-form-%d", e.ID) }>
+				<option value="">— Sin asignar —</option>
+				for _, j := range jugadores {
+					if j.EquipoID == e.ID {
+						<option
+							value={ fmt.Sprint(j.ID) }
+							selected?={ e.MejorJugador.Valid && e.MejorJugador.Int32 == j.ID }
+						>
+							{ j.Nombre }
+						</option>
+					}
+				}
+			</select>
+		</td>
+		<td>
+			<form
+				id={ fmt.Sprintf("edit-form-%d", e.ID) }
+				hx-put={ fmt.Sprintf("/equipos/%d", e.ID) }
+				hx-target="#equipos-lista"
+				hx-swap="outerHTML"
+			>
+				<button type="submit" class="btn primary">Guardar</button>
+				<button
+					type="button"
+					class="btn"
+					hx-get="/equipos/lista"
+					hx-target="#equipos-lista"
+					hx-swap="outerHTML"
+				>
+					Cancelar
+				</button>
+			</form>
+		</td>
+	</tr>
 }
