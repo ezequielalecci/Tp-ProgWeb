@@ -3,7 +3,14 @@ package views
 templ EquipoForm(f FormState) {
 	<details class="alta" open?={ f.Error != "" }>
 		<summary class="btn primary">Agregar equipo</summary>
-		<form method="post" action="/equipos">
+		<form 
+			method="post"
+			action="/equipos"
+			hx-post="/equipos"
+			hx-target="#equipos-lista"
+			hx-swap="outerHTML"
+			hx-on::after-request="if (event.detail.successful) { this.reset(); this.closest('details').open = false; }"
+		>
 			@formError(f)
 			<div class="grid">
 				<label class="field">

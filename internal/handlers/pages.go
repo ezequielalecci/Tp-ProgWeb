@@ -24,6 +24,7 @@ func (h *PageHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /equipos", h.CrearEquipo)
 	mux.HandleFunc("POST /jugadores", h.CrearJugador)
 	mux.HandleFunc("POST /partidos", h.CrearPartido)
+	mux.HandleFunc("DELETE /equipos/{id}", h.EliminarEquipo)
 }
 
 // GET /  (opcional: ?tab=jugadores o ?tab=partidos)

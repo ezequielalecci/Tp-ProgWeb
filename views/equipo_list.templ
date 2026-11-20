@@ -1,9 +1,12 @@
 package views
 
-import database "tpweb/db/sqlc"
+import (
+	database "tpweb/db/sqlc"
+	"fmt"
+)
 
 templ EquipoList(equipos []database.Equipo, jugadores []database.Jugadore) {
-	<section>
+	<section id="equipos-lista">
 		<h2>Equipos <span class="count">({ len(equipos) })</span></h2>
 		if len(equipos) == 0 {
 			<p class="empty">Todavía no hay equipos cargados. Agregá el primero con el formulario de arriba.</p>
@@ -18,6 +21,7 @@ templ EquipoList(equipos []database.Equipo, jugadores []database.Jugadore) {
 							<th scope="col" class="num">Valoración</th>
 							<th scope="col" class="num">Posición</th>
 							<th scope="col">Mejor jugador</th>
+							<th scope="col" class="actions-col">Acciones</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -35,6 +39,19 @@ templ EquipoList(equipos []database.Equipo, jugadores []database.Jugadore) {
 								<td class="num">{ e.Valoracion }</td>
 								<td class="num">{ e.PosicionTabla }</td>
 								<td>{ nombreJugador(jugadores, e.MejorJugador) }</td>
+								<td>
+									<button
+										type="button"
+										class="btn danger"
+										hx-delete={ fmt.Sprintf("/equipos/%d", e.ID) }
+										hx-target="closest tr"
+										hx-swap="outerHTML"
+										hx-confirm="¿Seguro que querés borrar este equipo?"
+									>
+										Borrar
+									</button>
+								</td>
+
 							</tr>
 						}
 					</tbody>

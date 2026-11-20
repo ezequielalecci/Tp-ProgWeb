@@ -52,7 +52,24 @@ func (h *PageHandler) CrearEquipo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, views.URLTab(views.TabEquipos), http.StatusSeeOther)
+	equipos, err := h.equipos.GetEquipos(r.Context())
+	if err != nil {
+		log.Printf("error al listar equipos: %v", err)
+		http.Error(w, "No se pudieron cargar los equipos", http.StatusInternalServerError)
+		return
+	}
+
+	jugadores, err := h.jugadores.GetJugadores(r.Context())
+	if err != nil {
+		log.Printf("error al listar jugadores: %v", err)
+		http.Error(w, "No se pudieron cargar los jugadores", http.StatusInternalServerError)
+		return
+	}
+
+	if err := views.EquipoList(equipos, jugadores).Render(r.Context(), w); err != nil {
+		log.Printf("error al renderizar lista de equipos: %v", err)
+		http.Error(w, "No se pudo renderizar la lista", http.StatusInternalServerError)
+	}
 }
 
 // POST /jugadores
@@ -212,4 +229,32 @@ func mayuscula(s string) string {
 		return s
 	}
 	return string(unicode.ToUpper(r)) + s[size:] + "."
+}
+
+// DELETE /equipos/{id}
+func (h *PageHandler) EliminarEquipo(w http.ResponseWriter, r *http.Request) {
+	id, err := formInt32Path(r, "id")
+	if err != nil || id <= 0 {
+		http.Error(w, "ID de equipo inválido", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.equipos.DeleteEquipo(r.Context(), id); err != nil {
+		if errors.Is(err, service.ErrEquipoNotFound) {
+			http.Error(w, "Equipo no encontrado", http.StatusNotFound)
+			return
+		}
+		log.Printf("error al eliminar equipo %d: %v", id, err)
+		http.Error(w, "No se pudo eliminar el equipo", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+func formInt32Path(r *http.Request, campo string) (int32, error) {
+	n, err := strconv.ParseInt(r.PathValue(campo), 10, 32)
+	if err != nil {
+		return 0, err
+	}
+	return int32(n), nil
 }
