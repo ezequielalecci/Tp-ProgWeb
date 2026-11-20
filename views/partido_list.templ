@@ -29,6 +29,16 @@ templ PartidoList(partidos []database.Partido, equipos []database.Equipo) {
 								<td class="score">{ p.GolesLocal } – { p.GolesVisitante }</td>
 								<td>{ nombreEquipoPartido(equipos, p.EquipoVisitanteID) }</td>
 								<td><span class={ "badge", claseEstado(p.Estado) }>{ p.Estado }</span></td>
+								<button
+										type="button"
+										class="btn danger"
+										hx-delete={ fmt.Sprintf("/partidos/%d", p.ID) }
+										hx-target="closest tr"
+										hx-swap="outerHTML"
+										hx-confirm="¿Seguro que querés borrar este partido?"
+									>
+ 									Eliminar
+								</button>
 							</tr>
 						}
 					</tbody>
