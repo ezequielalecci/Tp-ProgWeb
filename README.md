@@ -78,23 +78,23 @@ En esta etapa del desarrollo del servidor se completó la transición de la apli
 
 Las principales cosas que trbajamos fueron:
 
-- Integración de HTMX en el layout y entrega de recursos estáticos
-Se incorporó htmx.min.js de forma local en static/ y se referenció en layout.templ (/static/htmx.min.js), evitando dependencias de CDNs externos y garantizando disponibilidad dentro del contenedor Docker y caché del navegador.
-
-Se mantuvo el renderizado inicial de páginas completas y pestañas desde el servidor (PageHandler + templ), delegando a HTMX las mutaciones del DOM sin recarga completa del documento.
+- Integración de HTMX en el layout y entrega de recursos estáticos:
+   Se incorporó htmx.min.js de forma local en static/ y se referenció en layout.templ (/static/htmx.min.js), evitando dependencias de CDNs externos y garantizando disponibilidad dentro     del contenedor Docker y caché del navegador.
+   Se mantuvo el renderizado inicial de páginas completas y pestañas desde el servidor (PageHandler + templ), delegando a HTMX las mutaciones del DOM sin recarga completa del documento.
 
 - Operaciones de alta (POST) con actualización parcial del DOM
-Se configuraron los formularios de creación (hx-post, hx-target y hx-swap) para enviar datos de forma asíncrona y reemplazar únicamente el fragmento correspondiente de la lista/sección en el DOM, en lugar de forzar una recarga completa de la vista.
-
-Se conservaron las validaciones de entrada y el manejo de errores de dominio/base de datos (como restricciones UNIQUE o referencias inexistentes) devolviendo respuestas HTTP adecuadas (400 ante datos inválidos y 200 con el fragmento actualizado ante operaciones exitosas).
+   Se configuraron los formularios de creación (hx-post, hx-target y hx-swap) para enviar datos de forma asíncrona y reemplazar únicamente el fragmento correspondiente de la                lista/sección en el DOM, en lugar de forzar una recarga completa de la vista.
+   Se conservaron las validaciones de entrada y el manejo de errores de dominio/base de datos (como restricciones UNIQUE o referencias inexistentes) devolviendo respuestas HTTP             adecuadas (400 ante datos inválidos y 200 con el fragmento actualizado ante operaciones exitosas).
 
 - Operaciones de actualización (PUT / PATCH / POST según ruta)
-Se extendió el flujo hacia la edición/actualización de equipos, jugadores y partidos, permitiendo modificar registros existentes y reflejar los cambios en la interfaz sin recargar toda la página, respaldados por las consultas generadas con sqlc y la lógica de servicio.
+   Se extendió el flujo hacia la edición/actualización de equipos, jugadores y partidos, permitiendo modificar registros existentes y reflejar los cambios en la interfaz sin recargar       toda la página, respaldados por las consultas generadas con sqlc y la lógica de servicio.
 
 - Operaciones de baja (DELETE) sin recarga de página
-Se implementaron los endpoints y handlers DELETE /<entidad>/{id} en PageHandler / capa de formularios, integrados con la capa de servicio y PostgreSQL.
+   Se implementaron los endpoints y handlers DELETE /<entidad>/{id} en PageHandler / capa de formularios, integrados con la capa de servicio y PostgreSQL.
+   En las vistas de listado (*_list.templ), se asociaron los botones de eliminación con hx-delete, hx-confirm, hx-target="closest tr" y hx-swap="outerHTML", logrando que al responder
+   200 OK la fila se elimine directamente del DOM y persista el borrado en la base de datos.
 
-En las vistas de listado (*_list.templ), se asociaron los botones de eliminación con hx-delete, hx-confirm, hx-target="closest tr" y hx-swap="outerHTML", logrando que al responder 200 OK la fila se elimine directamente del DOM y persista el borrado en la base de datos.
+En conclusión: Durante esta etapa se consolidó una arquitectura híbrida de servidor Go con templ y HTMX para equipos, jugadores y partidos, logrando altas, actualizaciones y bajas reactivas en el DOM sin recargas completas de página, con validación en el servidor y persistencia transaccional en PostgreSQL. 
 
 
 Se validó el funcionamiento mediante inspección de red (códigos 200/304, peticiones asíncronas de HTMX), revisión de logs del servicio en Docker y comprobación de persistencia en PostgreSQL ante recargas completas (F5).
