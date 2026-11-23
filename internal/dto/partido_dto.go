@@ -50,18 +50,33 @@ func (req *CreatePartidoRequest) Validate() error {
 	return nil
 }
 
-type UpdateResultadoPartidoRequest struct {
-	GolesLocal     int16  `json:"goles_local"`
-	GolesVisitante int16  `json:"goles_visitante"`
-	Estado         string `json:"estado"` // PENDIENTE, JUGANDO, FINALIZADO
+type UpdatePartidoRequest struct {
+	EquipoLocalID     *int32   `json:"equipo_local_id"`
+	EquipoVisitanteID *int32   `json:"equipo_visitante_id"`
+	GolesLocal        int16    `json:"goles_local"`
+	GolesVisitante    int16    `json:"goles_visitante"`
+	Fecha             DateOnly `json:"fecha"`
+	Estado            string   `json:"estado"`
 }
 
-func (req *UpdateResultadoPartidoRequest) Validate() error {
+func (req *UpdatePartidoRequest) Validate() error {
+	if req.EquipoLocalID != nil && *req.EquipoLocalID <= 0 {
+		return errors.New("el ID del equipo local debe ser un entero positivo")
+	}
+	if req.EquipoVisitanteID != nil && *req.EquipoVisitanteID <= 0 {
+		return errors.New("el ID del equipo visitante debe ser un entero positivo")
+	}
+	if req.EquipoLocalID != nil && req.EquipoVisitanteID != nil && *req.EquipoLocalID == *req.EquipoVisitanteID {
+		return errors.New("el equipo local y el visitante no pueden ser el mismo")
+	}
 	if req.GolesLocal < 0 {
 		return errors.New("los goles del equipo local no pueden ser un valor negativo")
 	}
 	if req.GolesVisitante < 0 {
 		return errors.New("los goles del equipo visitante no pueden ser un valor negativo")
+	}
+	if req.Fecha.IsZero() {
+		return errors.New("la fecha del partido es obligatoria y debe tener formato YYYY-MM-DD")
 	}
 	if strings.TrimSpace(req.Estado) == "" {
 		return errors.New("el estado del partido no puede estar vacío")

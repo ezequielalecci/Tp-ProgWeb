@@ -300,3 +300,15 @@ func (h *PageHandler) EliminarPartido(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
+
+// formInt32Opcional devuelve nil si el campo vino vacío. Ejemplo, si se actualiza un partido y el equipo fue borrado
+func formInt32Opcional(r *http.Request, campo string) (*int32, error) {
+	if formTexto(r, campo) == "" {
+		return nil, nil
+	}
+	n, err := formInt32(r, campo)
+	if err != nil {
+		return nil, err
+	}
+	return &n, nil
+}

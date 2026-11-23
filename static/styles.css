@@ -63,3 +63,8 @@ td img{width:32px;height:32px;object-fit:cover;border-radius:50%;vertical-align:
 .estado-pendiente{color:var(--muted)} .estado-en-curso{color:var(--accent)} .estado-finalizado{color:var(--ok)}
 .score{font:700 17px Georgia,serif;letter-spacing:.04em}
 .empty{padding:36px;text-align:center;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:0}
+/* Inputs dentro de la tabla (filas de edición): ancho mínimo para que se lea el valor */
+td input,td select{min-width:7rem;padding:6px 8px;margin-top:0}
+td input[type=number]{min-width:4.5rem}
+td input[type=date]{min-width:9.5rem}
+td input[type=text],td input[type=url]{min-width:10rem}

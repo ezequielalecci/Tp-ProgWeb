@@ -1,10 +1,10 @@
 package views
 
 import (
-	database "tpweb/db/sqlc"
+	"database/sql"
 	"fmt"
+	database "tpweb/db/sqlc"
 )
-
 // PartidoList recibe el slice de partidos de sqlc. Los equipos se usan para
 // mostrar los nombres del local y del visitante.
 templ PartidoList(partidos []database.Partido, equipos []database.Equipo) {
@@ -27,13 +27,22 @@ templ PartidoList(partidos []database.Partido, equipos []database.Equipo) {
 					</thead>
 					<tbody>
 						for _, p := range partidos {
-							<tr>
+							<tr id={ fmt.Sprintf("partido-%d", p.ID) }>
 								<td>{ fecha(p.Fecha) }</td>
 								<td>{ nombreEquipoPartido(equipos, p.EquipoLocalID) }</td>
 								<td class="score">{ p.GolesLocal } – { p.GolesVisitante }</td>
 								<td>{ nombreEquipoPartido(equipos, p.EquipoVisitanteID) }</td>
 								<td><span class={ "badge", claseEstado(p.Estado) }>{ p.Estado }</span></td>
 								<td>
+										<button
+											type="button"
+											class="btn"
+											hx-get={ fmt.Sprintf("/partidos/%d/edit", p.ID) }
+											hx-target={ fmt.Sprintf("#partido-%d", p.ID) }
+											hx-swap="outerHTML"
+										>
+											Editar
+										</button>
 									<button
 											type="button"
 											class="btn danger"
@@ -52,4 +61,83 @@ templ PartidoList(partidos []database.Partido, equipos []database.Equipo) {
 			</div>
 		}
 	</section>
+}
+
+// PartidoEditRow reemplaza la fila del partido por una fila con inputs, con el
+// mismo esquema que JugadorEditRow (inputs asociados al form por su id).
+templ PartidoEditRow(p database.Partido, equipos []database.Equipo, f FormState) {
+	<tr id={ fmt.Sprintf("partido-%d", p.ID) }>
+		<td>
+			<input
+				type="date"
+				name="fecha"
+				form={ fmt.Sprintf("edit-partido-%d", p.ID) }
+				value={ f.GetOr("fecha", fechaInput(p.Fecha)) }
+				required
+			/>
+		</td>
+		<td>
+			@selectEquipoPartido("equipo_local_id", p.ID, p.EquipoLocalID, equipos, f)
+		</td>
+		<td class="score">
+			<input
+				type="number"
+				name="goles_local"
+				form={ fmt.Sprintf("edit-partido-%d", p.ID) }
+				value={ f.GetOr("goles_local", fmt.Sprint(p.GolesLocal)) }
+				min="0"
+				required
+			/>
+			<input
+				type="number"
+				name="goles_visitante"
+				form={ fmt.Sprintf("edit-partido-%d", p.ID) }
+				value={ f.GetOr("goles_visitante", fmt.Sprint(p.GolesVisitante)) }
+				min="0"
+				required
+			/>
+		</td>
+		<td>
+			@selectEquipoPartido("equipo_visitante_id", p.ID, p.EquipoVisitanteID, equipos, f)
+		</td>
+		<td>
+			<select name="estado" form={ fmt.Sprintf("edit-partido-%d", p.ID) } required>
+				for _, s := range estadosPartido {
+					<option value={ s.Valor } selected?={ f.GetOr("estado", p.Estado) == s.Valor }>{ s.Texto }</option>
+				}
+			</select>
+		</td>
+		<td>
+			<form
+				id={ fmt.Sprintf("edit-partido-%d", p.ID) }
+				hx-put={ fmt.Sprintf("/partidos/%d", p.ID) }
+				hx-target="#partidos-lista"
+				hx-swap="outerHTML"
+			>
+				<button type="submit" class="btn primary">Guardar</button>
+				<button
+					type="button"
+					class="btn"
+					hx-get="/partidos/lista"
+					hx-target="#partidos-lista"
+					hx-swap="outerHTML"
+				>
+					Cancelar
+				</button>
+			</form>
+		</td>
+	</tr>
+}
+
+// selectEquipoPartido arma el <select> de local o visitante. Si el equipo fue
+// eliminado (columna NULL), agrega una opción vacía para poder dejarlo así.
+templ selectEquipoPartido(campo string, partidoID int32, actual sql.NullInt32, equipos []database.Equipo, f FormState) {
+	<select name={ campo } form={ fmt.Sprintf("edit-partido-%d", partidoID) } required?={ actual.Valid }>
+		if !actual.Valid {
+			<option value="" selected?={ f.Get(campo) == "" }>(equipo eliminado)</option>
+		}
+		for _, e := range equipos {
+			<option value={ idStr(e.ID) } selected?={ f.GetOr(campo, idEquipoPartido(actual)) == idStr(e.ID) }>{ e.Nombre }</option>
+		}
+	</select>
 }

@@ -100,24 +100,49 @@ func (s *JugadorService) CreateJugador(ctx context.Context, req dto.CreateJugado
 	return s.queries.CreateJugador(ctx, params)
 }
 
-// UpdateJugadorStats actualiza goles y asistencias del jugador verificando existencia previa
-func (s *JugadorService) UpdateJugadorStats(ctx context.Context, id int32, req dto.UpdateJugadorStatsRequest) (database.Jugadore, error) {
-	// Verificar existencia previa
-	_, err := s.queries.GetJugador(ctx, id)
-	if err != nil {
+// UpdateJugador actualiza los datos de un jugador verificando su existencia previa
+func (s *JugadorService) UpdateJugador(ctx context.Context, id int32, req dto.UpdateJugadorRequest) (database.Jugadore, error) {
+	if _, err := s.queries.GetJugador(ctx, id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return database.Jugadore{}, ErrJugadorNotFound
 		}
 		return database.Jugadore{}, err
 	}
 
-	params := database.UpdateJugadorStatsParams{
-		ID:          id,
-		Goles:       req.Goles,
-		Asistencias: req.Asistencias,
+	fechaNac, err := time.Parse("2006-01-02", req.FechaNacimiento)
+	if err != nil {
+		return database.Jugadore{}, ErrFechaInvalida
 	}
 
-	return s.queries.UpdateJugadorStats(ctx, params)
+	if _, err := s.queries.GetEquipo(ctx, req.EquipoID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return database.Jugadore{}, ErrEquipoNotFound
+		}
+		return database.Jugadore{}, err
+	}
+
+	params := database.UpdateJugadorParams{
+		ID:              id,
+		EquipoID:        req.EquipoID,
+		Nombre:          req.Nombre,
+		Posicion:        req.Posicion,
+		FechaNacimiento: fechaNac,
+		MediaGeneral:    req.MediaGeneral,
+		Altura:          req.Altura,
+		Ritmo:           req.Ritmo,
+		Tiro:            req.Tiro,
+		Pase:            req.Pase,
+		Regate:          req.Regate,
+		Defensa:         req.Defensa,
+		Fisico:          req.Fisico,
+		Goles:           req.Goles,
+		Asistencias:     req.Asistencias,
+	}
+	if req.FotoUrl != nil {
+		params.FotoUrl = sql.NullString{String: *req.FotoUrl, Valid: true}
+	}
+
+	return s.queries.UpdateJugador(ctx, params)
 }
 
 // DeleteJugador elimina un jugador tras validar su existencia

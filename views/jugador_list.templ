@@ -37,7 +37,7 @@ templ JugadorList(jugadores []database.Jugadore, equipos []database.Equipo) {
 					</thead>
 					<tbody>
 						for _, j := range jugadores {
-							<tr>
+							<tr id={ fmt.Sprintf("jugador-%d", j.ID) }>
 								<td>
 									if j.FotoUrl.Valid {
 										<img src={ j.FotoUrl.String } alt="" loading="lazy"/>
@@ -60,6 +60,15 @@ templ JugadorList(jugadores []database.Jugadore, equipos []database.Equipo) {
 								<td class="num">{ j.Goles }</td>
 								<td class="num">{ j.Asistencias }</td>
 								<td>
+										<button
+											type="button"
+											class="btn"
+											hx-get={ fmt.Sprintf("/jugadores/%d/edit", j.ID) }
+											hx-target={ fmt.Sprintf("#jugador-%d", j.ID) }
+											hx-swap="outerHTML"
+										>
+											Editar
+										</button>
 									<button
 											type="button"
 											class="btn danger"
@@ -78,4 +87,117 @@ templ JugadorList(jugadores []database.Jugadore, equipos []database.Equipo) {
 			</div>
 		}
 	</section>
+}
+// JugadorEditRow reemplaza la fila del jugador por una fila con inputs.
+// Los inputs están en celdas distintas, así que se asocian al <form> de la
+// última celda con el atributo form="edit-jugador-{id}".
+templ JugadorEditRow(j database.Jugadore, equipos []database.Equipo, f FormState) {
+	<tr id={ fmt.Sprintf("jugador-%d", j.ID) }>
+		<td>
+			<input
+				type="url"
+				name="foto_url"
+				form={ fmt.Sprintf("edit-jugador-%d", j.ID) }
+				value={ f.GetOr("foto_url", j.FotoUrl.String) }
+				placeholder="https://..."
+			/>
+		</td>
+		<td>
+			<input
+				type="text"
+				name="nombre"
+				form={ fmt.Sprintf("edit-jugador-%d", j.ID) }
+				value={ f.GetOr("nombre", j.Nombre) }
+				maxlength="255"
+				required
+			/>
+		</td>
+		<td>
+			<select name="equipo_id" form={ fmt.Sprintf("edit-jugador-%d", j.ID) } required>
+				for _, e := range equipos {
+					<option value={ idStr(e.ID) } selected?={ f.GetOr("equipo_id", idStr(j.EquipoID)) == idStr(e.ID) }>{ e.Nombre }</option>
+				}
+			</select>
+		</td>
+		<td>
+			<select name="posicion" form={ fmt.Sprintf("edit-jugador-%d", j.ID) } required>
+				for _, p := range posiciones {
+					<option value={ p.Valor } selected?={ f.GetOr("posicion", j.Posicion) == p.Valor }>{ p.Valor }</option>
+				}
+			</select>
+		</td>
+		<td>
+			<input
+				type="date"
+				name="fecha_nacimiento"
+				form={ fmt.Sprintf("edit-jugador-%d", j.ID) }
+				value={ f.GetOr("fecha_nacimiento", fechaInput(j.FechaNacimiento)) }
+				required
+			/>
+		</td>
+		<td>
+			<input
+				type="number"
+				name="altura"
+				form={ fmt.Sprintf("edit-jugador-%d", j.ID) }
+				value={ f.GetOr("altura", j.Altura) }
+				min="1"
+				max="2.5"
+				step="0.01"
+				required
+			/>
+		</td>
+		for _, s := range statsJugadorEdit(j) {
+			<td>
+				<input
+					type="number"
+					name={ s.Valor }
+					form={ fmt.Sprintf("edit-jugador-%d", j.ID) }
+					value={ f.GetOr(s.Valor, s.Texto) }
+					min="1"
+					max="99"
+					required
+				/>
+			</td>
+		}
+		<td>
+			<input
+				type="number"
+				name="goles"
+				form={ fmt.Sprintf("edit-jugador-%d", j.ID) }
+				value={ f.GetOr("goles", fmt.Sprint(j.Goles)) }
+				min="0"
+				required
+			/>
+		</td>
+		<td>
+			<input
+				type="number"
+				name="asistencias"
+				form={ fmt.Sprintf("edit-jugador-%d", j.ID) }
+				value={ f.GetOr("asistencias", fmt.Sprint(j.Asistencias)) }
+				min="0"
+				required
+			/>
+		</td>
+		<td>
+			<form
+				id={ fmt.Sprintf("edit-jugador-%d", j.ID) }
+				hx-put={ fmt.Sprintf("/jugadores/%d", j.ID) }
+				hx-target="#jugadores-lista"
+				hx-swap="outerHTML"
+			>
+				<button type="submit" class="btn primary">Guardar</button>
+				<button
+					type="button"
+					class="btn"
+					hx-get="/jugadores/lista"
+					hx-target="#jugadores-lista"
+					hx-swap="outerHTML"
+				>
+					Cancelar
+				</button>
+			</form>
+		</td>
+	</tr>
 }

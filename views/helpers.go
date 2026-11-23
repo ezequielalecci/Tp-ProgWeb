@@ -143,3 +143,26 @@ func nombreJugador(jugadores []database.Jugadore, id sql.NullInt32) string {
 func claseEstado(estado string) string {
 	return "estado-" + strings.ReplaceAll(strings.ToLower(estado), " ", "-")
 }
+
+func fechaInput(t time.Time) string {
+	return t.Format("2006-01-02")
+}
+
+// idEquipoPartido devuelve el id como texto, o "" si el equipo fue eliminado.
+func idEquipoPartido(id sql.NullInt32) string {
+	if !id.Valid {
+		return ""
+	}
+	return idStr(id.Int32)
+}
+
+// statsJugadorEdit devuelve los atributos en el mismo orden que statsJugador,
+// con el valor actual del jugador en Texto.
+func statsJugadorEdit(j database.Jugadore) []opcion {
+	valores := []int16{j.MediaGeneral, j.Ritmo, j.Tiro, j.Pase, j.Regate, j.Defensa, j.Fisico}
+	out := make([]opcion, len(statsJugador))
+	for i, s := range statsJugador {
+		out[i] = opcion{Valor: s.Valor, Texto: strconv.Itoa(int(valores[i]))}
+	}
+	return out
+}

@@ -101,11 +101,24 @@ INSERT INTO "jugadores" (
 
 RETURNING *;
 
--- name: UpdateJugadorStats :one
+-- name: UpdateJugador :one
 UPDATE "jugadores"
 SET 
-    "goles" = $2,
-    "asistencias" = $3
+    "equipo_id" = COALESCE($2, "equipo_id"),
+    "nombre" = COALESCE($3, "nombre"),
+    "posicion" = COALESCE($4, "posicion"),
+    "fecha_nacimiento" = COALESCE($5, "fecha_nacimiento"),
+    "media_general" = COALESCE($6, "media_general"),
+    "altura" = COALESCE($7, "altura"),
+    "ritmo" = COALESCE($8, "ritmo"),
+    "tiro" = COALESCE($9, "tiro"),
+    "pase" = COALESCE($10, "pase"),
+    "regate" = COALESCE($11, "regate"),
+    "defensa" = COALESCE($12, "defensa"),
+    "fisico" = COALESCE($13, "fisico"),
+    "goles" = COALESCE($14, "goles"),
+    "asistencias" = COALESCE($15, "asistencias"),
+    "foto_url" = COALESCE($16, "foto_url")
 WHERE "id" = $1
 RETURNING *;
 
@@ -138,12 +151,15 @@ INSERT INTO "partidos" (
 )
 RETURNING *;
 
--- name: UpdateResultadoPartido :one
+-- name: UpdatePartido :one
 UPDATE "partidos"
 SET 
-    "goles_local" = $2,
-    "goles_visitante" = $3,
-    "estado" = $4
+    "equipo_local_id" = COALESCE($2, "equipo_local_id"),
+    "equipo_visitante_id" = COALESCE($3, "equipo_visitante_id"),
+    "goles_local" = COALESCE($4, "goles_local"),
+    "goles_visitante" = COALESCE($5, "goles_visitante"),
+    "fecha" = COALESCE($6, "fecha"),
+    "estado" = COALESCE($7, "estado")
 WHERE "id" = $1
 RETURNING *;
 

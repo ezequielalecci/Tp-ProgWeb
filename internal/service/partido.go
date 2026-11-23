@@ -85,24 +85,47 @@ func (s *PartidoService) CrearPartido(ctx context.Context, req dto.CreatePartido
 	return s.queries.CreatePartido(ctx, params)
 }
 
-// UpdateResultadoPartido actualiza marcadores y estado previa verificación
-func (s *PartidoService) UpdateResultadoPartido(ctx context.Context, id int32, req dto.UpdateResultadoPartidoRequest) (database.Partido, error) {
-	_, err := s.queries.GetPartido(ctx, id)
-	if err != nil {
+// UpdatePartido actualiza marcadores y estado previa verificación
+func (s *PartidoService) UpdatePartido(ctx context.Context, id int32, req dto.UpdatePartidoRequest) (database.Partido, error) {
+	if _, err := s.queries.GetPartido(ctx, id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return database.Partido{}, ErrPartidoNotFound
 		}
 		return database.Partido{}, err
 	}
 
-	params := database.UpdateResultadoPartidoParams{
-		ID:             id,
-		GolesLocal:     req.GolesLocal,
-		GolesVisitante: req.GolesVisitante,
-		Estado:         req.Estado,
+	local, err := s.equipoNullable(ctx, req.EquipoLocalID, ErrEquipoLocalNotFound)
+	if err != nil {
+		return database.Partido{}, err
+	}
+	visitante, err := s.equipoNullable(ctx, req.EquipoVisitanteID, ErrEquipoVisitNotFound)
+	if err != nil {
+		return database.Partido{}, err
 	}
 
-	return s.queries.UpdateResultadoPartido(ctx, params)
+	return s.queries.UpdatePartido(ctx, database.UpdatePartidoParams{
+		ID:                id,
+		EquipoLocalID:     local,
+		EquipoVisitanteID: visitante,
+		GolesLocal:        req.GolesLocal,
+		GolesVisitante:    req.GolesVisitante,
+		Fecha:             req.Fecha.Time,
+		Estado:            req.Estado,
+	})
+}
+
+// equipoNullable pasa el id opcional a sql.NullInt32 y, si viene, verifica que exista.
+func (s *PartidoService) equipoNullable(ctx context.Context, id *int32, noEncontrado error) (sql.NullInt32, error) {
+	if id == nil {
+		return sql.NullInt32{}, nil // Valid: false → NULL en la base
+	}
+	if _, err := s.queries.GetEquipo(ctx, *id); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return sql.NullInt32{}, noEncontrado
+		}
+		return sql.NullInt32{}, err
+	}
+	return sql.NullInt32{Int32: *id, Valid: true}, nil
 }
 
 // DeletePartido elimina un partido verificando su existencia
