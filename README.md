@@ -82,22 +82,31 @@ Las principales cosas que trbajamos fueron:
    Se incorporó htmx.min.js de forma local en static/ y se referenció en layout.templ (/static/htmx.min.js), evitando dependencias de CDNs externos y garantizando disponibilidad dentro     del contenedor Docker y caché del navegador.
    Se mantuvo el renderizado inicial de páginas completas y pestañas desde el servidor (PageHandler + templ), delegando a HTMX las mutaciones del DOM sin recarga completa del documento.
 
-- Operaciones de alta (POST) con actualización parcial del DOM:
+- Operaciones de alta (POST):
    Se configuraron los formularios de creación (hx-post, hx-target y hx-swap) para enviar datos de forma asíncrona y reemplazar únicamente el fragmento correspondiente de la                lista/sección en el DOM, en lugar de forzar una recarga completa de la vista.
    Se conservaron las validaciones de entrada y el manejo de errores de dominio/base de datos (como restricciones UNIQUE o referencias inexistentes) devolviendo respuestas HTTP             adecuadas (400 ante datos inválidos y 200 con el fragmento actualizado ante operaciones exitosas).
 
 - Operaciones de actualización (PUT / PATCH / POST según ruta):
    Se extendió el flujo hacia la edición/actualización de equipos, jugadores y partidos, permitiendo modificar registros existentes y reflejar los cambios en la interfaz sin recargar       toda la página, respaldados por las consultas generadas con sqlc y la lógica de servicio.
 
-- Operaciones de baja (DELETE) sin recarga de página:
+- Operaciones de baja (DELETE):
    Se implementaron los endpoints y handlers DELETE /<entidad>/{id} en PageHandler / capa de formularios, integrados con la capa de servicio y PostgreSQL.
    En las vistas de listado (*_list.templ), se asociaron los botones de eliminación con hx-delete, hx-confirm, hx-target="closest tr" y hx-swap="outerHTML", logrando que al responder
    200 OK la fila se elimine directamente del DOM y persista el borrado en la base de datos.
 
-En conclusión: Durante esta etapa se consolidó una arquitectura híbrida de servidor Go con templ y HTMX para equipos, jugadores y partidos, logrando altas, actualizaciones y bajas reactivas en el DOM sin recargas completas de página, con validación en el servidor y persistencia transaccional en PostgreSQL. 
+- Nuevos handlers y registro de rutas en el servidor (net/http):
+  
+- Handlers de borrado (DELETE): se implementaron los métodos en PageHandler (por ejemplo, EliminarJugador y EliminarPartido, junto con el de equipos) encargados de extraer y validar el {id} del path, invocar a la capa de service, mapear errores de dominio/persistencia a códigos HTTP (400 por ID inválido, 404 si no existe el registro, 500 ante fallos internos) y responder 200 OK al completarse la eliminación.
 
+- Handlers de actualización (PUT / PATCH / POST): se sumaron o adaptaron los handlers responsables de recibir los datos editados de cada entidad, validar la entrada, ejecutar la actualización en el servicio/base de datos y devolver la respuesta/fragmento actualizado correspondiente.
+
+- Adaptación de handlers de creación (POST): se ajustaron handlers como CrearJugador (y el flujo de alta de las entidades) para que, ante un alta exitosa vía HTMX, consulten el estado actualizado y rendericen el fragmento de lista (views.*List) con 200 OK en lugar de redirigir con http.Redirect, manteniendo las respuestas de error (400) cuando fallan validaciones o restricciones de PostgreSQL.
+
+- Registro de rutas (RegisterRoutes): se expusieron las nuevas rutas en el http.ServeMux (incluyendo los patrones DELETE /<entidad>/{id} y las rutas asociadas a actualización) conectándolas con los nuevos métodos de PageHandler.
 
 Se validó el funcionamiento mediante inspección de red (códigos 200/304, peticiones asíncronas de HTMX), revisión de logs del servicio en Docker y comprobación de persistencia en PostgreSQL ante recargas completas (F5).
+
+En conclusión: Durante esta etapa se consolidó una arquitectura híbrida de servidor Go con templ y HTMX para equipos, jugadores y partidos, logrando altas, actualizaciones y bajas reactivas en el DOM sin recargas completas de página, con validación en el servidor y persistencia transaccional en PostgreSQL. 
 
 esta seria la estructura de la base de datos
 ![Diagrama base de datos](assets/DiagramaDB.jpeg)
