@@ -72,14 +72,32 @@ make generate && docker compose up -d postgres
 go test ./internal/handlers/
 ```
 
-## DETALLES DE ESTA QUINTA PARTE (renderizado en el servidor con templ):
-+ se reemplazó el frontend de HTML + JavaScript (`static/index.html` y `static/app.js`) por vistas renderizadas en el servidor con [templ](https://templ.guide/); el navegador ya no ejecuta JavaScript
-+ los componentes están en `views/`: `layout.templ` (estructura base, encabezado y pestañas), `index.templ` (página principal) y, por cada entidad, un `*_list.templ` (tabla) y un `*_form.templ` (formulario de alta)
-+ el diseño es el mismo del TP4: una única hoja de estilos (`static/styles.css`), adaptada al HTML que generan los componentes
-+ se eliminaron los handlers de la API JSON; `internal/handlers/pages.go` atiende `GET /` y `internal/handlers/forms.go` los `POST /equipos`, `POST /jugadores` y `POST /partidos`, que siguen el patrón Post/Redirect/Get
-+ la capa de servicios y los DTO con sus validaciones se reutilizan sin cambios: solo cambió de dónde vienen los datos (formulario en lugar de JSON) y qué se responde (HTML en lugar de JSON)
-+ el código generado por templ (`views/*_templ.go`) no se versiona, igual que el de sqlc: se genera con `make templ` y dentro del build de Docker
-+ por ahora solo se puede listar y dar de alta. Editar, eliminar y las consultas por equipo que tenía el TP4 quedaron afuera de esta entrega y se implementaran mas tarde si se nos solicita eso
+## DETALLES DE ESTA SEXTA PARTE (interfaces Dinámicas con HTMX):
+
+En esta etapa del desarrollo del servidor se completó la transición de la aplicación web en Go (net/http, sqlc, templ) hacia una interacción parcial y asíncrona (SPA-like) con HTMX para todo el ciclo CRUD (crear, consultar, actualizar y eliminar) sobre las tres entidades: equipos, jugadores y partidos, manteniendo la persistencia en PostgreSQL dentro del entorno Docker.
+
+Las principales cosas que trbajamos fueron:
+
+- Integración de HTMX en el layout y entrega de recursos estáticos
+Se incorporó htmx.min.js de forma local en static/ y se referenció en layout.templ (/static/htmx.min.js), evitando dependencias de CDNs externos y garantizando disponibilidad dentro del contenedor Docker y caché del navegador.
+
+Se mantuvo el renderizado inicial de páginas completas y pestañas desde el servidor (PageHandler + templ), delegando a HTMX las mutaciones del DOM sin recarga completa del documento.
+
+- Operaciones de alta (POST) con actualización parcial del DOM
+Se configuraron los formularios de creación (hx-post, hx-target y hx-swap) para enviar datos de forma asíncrona y reemplazar únicamente el fragmento correspondiente de la lista/sección en el DOM, en lugar de forzar una recarga completa de la vista.
+
+Se conservaron las validaciones de entrada y el manejo de errores de dominio/base de datos (como restricciones UNIQUE o referencias inexistentes) devolviendo respuestas HTTP adecuadas (400 ante datos inválidos y 200 con el fragmento actualizado ante operaciones exitosas).
+
+- Operaciones de actualización (PUT / PATCH / POST según ruta)
+Se extendió el flujo hacia la edición/actualización de equipos, jugadores y partidos, permitiendo modificar registros existentes y reflejar los cambios en la interfaz sin recargar toda la página, respaldados por las consultas generadas con sqlc y la lógica de servicio.
+
+- Operaciones de baja (DELETE) sin recarga de página
+Se implementaron los endpoints y handlers DELETE /<entidad>/{id} en PageHandler / capa de formularios, integrados con la capa de servicio y PostgreSQL.
+
+En las vistas de listado (*_list.templ), se asociaron los botones de eliminación con hx-delete, hx-confirm, hx-target="closest tr" y hx-swap="outerHTML", logrando que al responder 200 OK la fila se elimine directamente del DOM y persista el borrado en la base de datos.
+
+
+Se validó el funcionamiento mediante inspección de red (códigos 200/304, peticiones asíncronas de HTMX), revisión de logs del servicio en Docker y comprobación de persistencia en PostgreSQL ante recargas completas (F5).
 
 esta seria la estructura de la base de datos
 ![Diagrama base de datos](assets/DiagramaDB.jpeg)
