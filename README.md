@@ -82,14 +82,14 @@ Las principales cosas que trbajamos fueron:
    Se incorporó htmx.min.js de forma local en static/ y se referenció en layout.templ (/static/htmx.min.js), evitando dependencias de CDNs externos y garantizando disponibilidad dentro     del contenedor Docker y caché del navegador.
    Se mantuvo el renderizado inicial de páginas completas y pestañas desde el servidor (PageHandler + templ), delegando a HTMX las mutaciones del DOM sin recarga completa del documento.
 
-- Operaciones de alta (POST) con actualización parcial del DOM
+- Operaciones de alta (POST) con actualización parcial del DOM:
    Se configuraron los formularios de creación (hx-post, hx-target y hx-swap) para enviar datos de forma asíncrona y reemplazar únicamente el fragmento correspondiente de la                lista/sección en el DOM, en lugar de forzar una recarga completa de la vista.
    Se conservaron las validaciones de entrada y el manejo de errores de dominio/base de datos (como restricciones UNIQUE o referencias inexistentes) devolviendo respuestas HTTP             adecuadas (400 ante datos inválidos y 200 con el fragmento actualizado ante operaciones exitosas).
 
-- Operaciones de actualización (PUT / PATCH / POST según ruta)
+- Operaciones de actualización (PUT / PATCH / POST según ruta):
    Se extendió el flujo hacia la edición/actualización de equipos, jugadores y partidos, permitiendo modificar registros existentes y reflejar los cambios en la interfaz sin recargar       toda la página, respaldados por las consultas generadas con sqlc y la lógica de servicio.
 
-- Operaciones de baja (DELETE) sin recarga de página
+- Operaciones de baja (DELETE) sin recarga de página:
    Se implementaron los endpoints y handlers DELETE /<entidad>/{id} en PageHandler / capa de formularios, integrados con la capa de servicio y PostgreSQL.
    En las vistas de listado (*_list.templ), se asociaron los botones de eliminación con hx-delete, hx-confirm, hx-target="closest tr" y hx-swap="outerHTML", logrando que al responder
    200 OK la fila se elimine directamente del DOM y persista el borrado en la base de datos.
