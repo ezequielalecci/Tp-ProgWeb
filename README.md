@@ -87,7 +87,7 @@ Las principales cosas que trbajamos fueron:
    Se conservaron las validaciones de entrada y el manejo de errores de dominio/base de datos (como restricciones UNIQUE o referencias inexistentes) devolviendo respuestas HTTP             adecuadas (400 ante datos inválidos y 200 con el fragmento actualizado ante operaciones exitosas).
 
 - Operaciones de actualización (PUT / PATCH / POST según ruta):
-   Se extendió el flujo hacia la edición/actualización de equipos, jugadores y partidos, permitiendo modificar registros existentes y reflejar los cambios en la interfaz sin recargar       toda la página, respaldados por las consultas generadas con sqlc y la lógica de servicio.
+  Se implementaron handlers de edición en línea (como EditarEquipoForm para GET /<entidad>/{id}/edit, el handler de actualización para PUT /<entidad>/{id} y la ruta parcial de             listado/cancelación), registrados en RegisterRoutes. En las vistas .templ se crearon filas editables (*EditRow) con asociación de campos mediante el atributo form y actualización        parcial con HTMX (hx-get, hx-put, hx-target, hx-swap), manteniendo la validación y persistencia en PostgreSQL a través de la capa de service
 
 - Operaciones de baja (DELETE):
    Se implementaron los endpoints y handlers DELETE /<entidad>/{id} en PageHandler / capa de formularios, integrados con la capa de servicio y PostgreSQL.
